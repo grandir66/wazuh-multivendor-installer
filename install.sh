@@ -8,7 +8,7 @@
 #
 # Usage: sudo ./install.sh
 #
-# Author: Riccardo Malagoli (@grandir66)
+# Author: Riccardo Grandi (@grandir66)
 # Repository: https://github.com/grandir66/wazuh-multivendor-installer
 #
 
@@ -71,7 +71,7 @@ print_banner() {
     echo "║     ${BOLD}Wazuh Multi-Vendor Integration Installer${NC}${CYAN}                     ║"
     echo "║                                                                  ║"
     echo "║     Version: ${VERSION}                                              ║"
-    echo "║     Author: Riccardo Malagoli (@grandir66)                       ║"
+    echo "║     Author: Riccardo Grandi (@grandir66)                          ║"
     echo "║                                                                  ║"
     echo "╚══════════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"

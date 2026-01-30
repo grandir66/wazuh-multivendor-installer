@@ -373,7 +373,7 @@ bash modules/modulename/check-installed.sh && echo "Installed" || echo "Not inst
 
 ## Authors
 
-- **Riccardo Malagoli** ([@grandir66](https://github.com/grandir66))
+- **Riccardo Grandi** ([@grandir66](https://github.com/grandir66))
 
 ## Contributing
 
