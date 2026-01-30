@@ -366,18 +366,18 @@
     <group>stormshield,router,stats</group>
   </rule>
 
-  <!-- High packet loss alert -->
+  <!-- High packet loss alert (50% or more) -->
   <rule id="100471" level="8">
     <if_sid>100470</if_sid>
-    <field name="stormshield.lossrate">^([5-9][0-9]|100)$</field>
+    <field name="stormshield.lossrate">50|51|52|53|54|55|56|57|58|59|60|70|80|90|100</field>
     <description>Stormshield: HIGH PACKET LOSS $(stormshield.lossrate)% on $(stormshield.router) via $(stormshield.gw)</description>
     <group>stormshield,router,network_issue</group>
   </rule>
 
-  <!-- Gateway down -->
+  <!-- Gateway down (10% or more downrate) -->
   <rule id="100472" level="10">
     <if_sid>100470</if_sid>
-    <field name="stormshield.downrate">^([1-9][0-9]|100)$</field>
+    <field name="stormshield.downrate">10|20|30|40|50|60|70|80|90|100</field>
     <description>Stormshield: GATEWAY DOWN $(stormshield.downrate)% - $(stormshield.router) via $(stormshield.gw)</description>
     <group>stormshield,router,network_issue,critical</group>
   </rule>
