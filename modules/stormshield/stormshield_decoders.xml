@@ -1,10 +1,10 @@
 <!-- Stormshield Firewall Decoders for Wazuh -->
 <!-- https://github.com/grandir66/wazuh-multivendor-installer -->
 <!-- Rule IDs: 100400-100499 -->
-<!-- Expects JSON format from rsyslog -->
+<!-- Expects JSON format from stormshield-decoder.py -->
 
 <!-- Stormshield JSON decoder -->
-<decoder name="stormshield">
-  <prematch>^{"time":"</prematch>
+<decoder name="stormshield-json">
+  <prematch>^{"integration":"stormshield"</prematch>
   <plugin_decoder>JSON_Decoder</plugin_decoder>
 </decoder>

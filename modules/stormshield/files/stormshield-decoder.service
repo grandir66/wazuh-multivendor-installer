@@ -1,0 +1,24 @@
+[Unit]
+Description=Stormshield WELF to JSON Decoder for Wazuh
+After=network.target wazuh-manager.service
+Wants=wazuh-manager.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /var/ossec/integrations/stormshield-decoder.py
+Restart=always
+RestartSec=5
+User=root
+Group=root
+StandardOutput=null
+StandardError=journal
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
