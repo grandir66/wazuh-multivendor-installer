@@ -170,20 +170,26 @@ Comprehensive monitoring for Mikrotik routers via syslog.
 
 ### Stormshield Firewall
 
-Complete monitoring for Stormshield SNS firewalls via syslog (WELF format).
+Complete monitoring for Stormshield SNS firewalls using a Python decoder for reliable WELF parsing.
+
+**Architecture:**
+```
+Stormshield ──UDP:5514──▶ stormshield-decoder.py ──UDP:5515──▶ Wazuh
+   (WELF)                    (converts to JSON)              (JSON decoder)
+```
 
 **Features:**
+- Python decoder for reliable field extraction
 - Admin authentication and session tracking
 - VPN monitoring (IPsec, SSL VPN)
 - IPS/IDS alarms with priority levels
 - Configuration change detection
-- Firewall rule modifications
 - Brute force detection
 - MITRE ATT&CK mapping
 
 **Configuration on Stormshield:**
 1. Go to **Configuration > Notifications > Logs - Syslog - IPFIX**
-2. Add Syslog server: `<WAZUH_IP>:514`
+2. Add Syslog server: `<WAZUH_IP>:5514` (UDP)
 3. Enable log types: l_server, l_auth, l_vpn, l_alarm, l_system
 
 ## Dashboards
