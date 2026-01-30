@@ -2,161 +2,111 @@
 <!-- https://github.com/grandir66/wazuh-multivendor-installer -->
 <!-- Rule IDs: 100400-100499 -->
 
-<!-- Main Stormshield decoder - matches WELF format -->
+<!-- Main Stormshield decoder -->
 <decoder name="stormshield">
   <prematch>id=firewall</prematch>
 </decoder>
 
-<!-- Extract all main fields in one decoder using accumulate -->
-<decoder name="stormshield-core">
+<!-- Core fields: time and fw -->
+<decoder name="stormshield1">
   <parent>stormshield</parent>
   <regex offset="after_parent"> time="(\d+-\d+-\d+ \d+:\d+:\d+)" fw="(\S+)"</regex>
   <order>time, fw</order>
 </decoder>
 
-<decoder name="stormshield-src">
+<!-- Network: src, srcport, dst, dstport -->
+<decoder name="stormshield2">
   <parent>stormshield</parent>
-  <regex> src=(\d+.\d+.\d+.\d+) srcport=(\d+)</regex>
-  <order>srcip, srcport</order>
-  <accumulate/>
+  <regex> src=(\d+\.\d+\.\d+\.\d+) srcport=(\d+)\.+ dst=(\d+\.\d+\.\d+\.\d+) dstport=(\d+)</regex>
+  <order>srcip, srcport, dstip, dstport</order>
 </decoder>
 
-<decoder name="stormshield-dst">
+<!-- Action and message -->
+<decoder name="stormshield3">
   <parent>stormshield</parent>
-  <regex> dst=(\d+.\d+.\d+.\d+) dstport=(\d+)</regex>
-  <order>dstip, dstport</order>
-  <accumulate/>
+  <regex> action=(\w+) msg="([^"]+)"</regex>
+  <order>stormshield_action, msg</order>
 </decoder>
 
-<decoder name="stormshield-action">
+<!-- Alarm fields -->
+<decoder name="stormshield4">
   <parent>stormshield</parent>
-  <regex> action=(\w+) </regex>
-  <order>stormshield_action</order>
-  <accumulate/>
+  <regex> class=(\w+) classification=(\d+) alarmid=(\d+)</regex>
+  <order>class, classification, alarmid</order>
 </decoder>
 
-<decoder name="stormshield-msg">
-  <parent>stormshield</parent>
-  <regex> msg="([^"]+)"</regex>
-  <order>msg</order>
-  <accumulate/>
-</decoder>
-
-<decoder name="stormshield-logtype">
+<!-- Logtype -->
+<decoder name="stormshield5">
   <parent>stormshield</parent>
   <regex> logtype="(\w+)"</regex>
   <order>logtype</order>
-  <accumulate/>
 </decoder>
 
-<decoder name="stormshield-pri">
+<!-- Priority and protocol -->
+<decoder name="stormshield6">
   <parent>stormshield</parent>
-  <regex> pri=(\d+) </regex>
-  <order>pri</order>
-  <accumulate/>
+  <regex> pri=(\d+) \.+ ipproto=(\w+)</regex>
+  <order>pri, ipproto</order>
 </decoder>
 
-<decoder name="stormshield-proto">
+<!-- Interfaces -->
+<decoder name="stormshield7">
   <parent>stormshield</parent>
-  <regex> ipproto=(\w+) </regex>
-  <order>ipproto</order>
-  <accumulate/>
+  <regex> srcifname="([^"]+)"\.+ dstifname="([^"]+)"</regex>
+  <order>srcifname, dstifname</order>
 </decoder>
 
-<decoder name="stormshield-srcifname">
+<!-- Rule info -->
+<decoder name="stormshield8">
   <parent>stormshield</parent>
-  <regex> srcifname="([^"]+)"</regex>
-  <order>srcifname</order>
-  <accumulate/>
+  <regex> ruleid=(\d+) rulename="([^"]+)"</regex>
+  <order>ruleid, rulename</order>
 </decoder>
 
-<decoder name="stormshield-dstifname">
+<!-- Auth: user and address -->
+<decoder name="stormshield9">
   <parent>stormshield</parent>
-  <regex> dstifname="([^"]+)"</regex>
-  <order>dstifname</order>
-  <accumulate/>
+  <regex> user="([^"]+)"\.* address=(\S+)</regex>
+  <order>user, address</order>
 </decoder>
 
-<decoder name="stormshield-alarmid">
-  <parent>stormshield</parent>
-  <regex> alarmid=(\d+) </regex>
-  <order>alarmid</order>
-  <accumulate/>
-</decoder>
-
-<decoder name="stormshield-class">
-  <parent>stormshield</parent>
-  <regex> class=(\w+) </regex>
-  <order>class</order>
-  <accumulate/>
-</decoder>
-
-<decoder name="stormshield-ruleid">
-  <parent>stormshield</parent>
-  <regex> ruleid=(\d+) </regex>
-  <order>ruleid</order>
-  <accumulate/>
-</decoder>
-
-<decoder name="stormshield-rulename">
-  <parent>stormshield</parent>
-  <regex> rulename="([^"]+)"</regex>
-  <order>rulename</order>
-  <accumulate/>
-</decoder>
-
-<decoder name="stormshield-user">
+<!-- Auth: user only -->
+<decoder name="stormshield10">
   <parent>stormshield</parent>
   <regex> user="([^"]+)"</regex>
   <order>user</order>
-  <accumulate/>
 </decoder>
 
-<decoder name="stormshield-address">
-  <parent>stormshield</parent>
-  <regex> address=(\S+) </regex>
-  <order>address</order>
-  <accumulate/>
-</decoder>
-
-<decoder name="stormshield-error">
+<!-- Error -->
+<decoder name="stormshield11">
   <parent>stormshield</parent>
   <regex> error=(\d+)</regex>
   <order>error</order>
-  <accumulate/>
 </decoder>
 
-<decoder name="stormshield-tunnel">
+<!-- VPN tunnel -->
+<decoder name="stormshield12">
   <parent>stormshield</parent>
   <regex> tunnel="([^"]+)"</regex>
   <order>tunnel</order>
-  <accumulate/>
 </decoder>
 
-<decoder name="stormshield-phase">
+<!-- VPN phase -->
+<decoder name="stormshield13">
   <parent>stormshield</parent>
-  <regex> phase=(\d+) </regex>
+  <regex> phase=(\d+)</regex>
   <order>phase</order>
-  <accumulate/>
 </decoder>
 
-<decoder name="stormshield-srcmac">
-  <parent>stormshield</parent>
-  <regex> srcmac=(\S+) </regex>
-  <order>srcmac</order>
-  <accumulate/>
-</decoder>
-
-<decoder name="stormshield-dstcountry">
+<!-- Country -->
+<decoder name="stormshield14">
   <parent>stormshield</parent>
   <regex> dstcountry="(\w+)"</regex>
   <order>dstcountry</order>
-  <accumulate/>
 </decoder>
 
-<decoder name="stormshield-srccountry">
+<decoder name="stormshield15">
   <parent>stormshield</parent>
   <regex> srccountry="(\w+)"</regex>
   <order>srccountry</order>
-  <accumulate/>
 </decoder>
