@@ -583,12 +583,20 @@ show_main_menu() {
         print_banner
         display_modules
         
+        # Show installation location
+        echo -e "  ${BOLD}Current Location:${NC} ${SCRIPT_DIR}"
+        if [[ "$SCRIPT_DIR" == /tmp/* ]]; then
+            echo -e "  ${YELLOW}⚠ Running from /tmp - will be lost on reboot!${NC}"
+        fi
+        echo ""
+        
         echo -e "  ${BOLD}Options:${NC}"
         echo -e "  ─────────────────────────────────────────────────────────────────────────"
         echo -e "  ${GREEN}[I]${NC} Install modules       ${GREEN}[U]${NC} Uninstall modules"
         echo -e "  ${GREEN}[D]${NC} Install dashboards    ${GREEN}[T]${NC} Test configuration"
         echo -e "  ${GREEN}[R]${NC} Restart Wazuh         ${GREEN}[A]${NC} Install ALL modules"
-        echo -e "  ${GREEN}[S]${NC} Status summary        ${GREEN}[Q]${NC} Quit"
+        echo -e "  ${GREEN}[S]${NC} Status summary        ${GREEN}[P]${NC} Install to /opt (permanent)"
+        echo -e "  ${GREEN}[Q]${NC} Quit"
         echo ""
         
         read -p "  Select option: " choice
@@ -601,6 +609,7 @@ show_main_menu() {
             r) restart_wazuh; read -p "Press Enter to continue..." ;;
             a) install_all_modules ;;
             s) show_status_summary ;;
+            p) install_to_opt ;;
             q) 
                 echo ""
                 print_ok "Goodbye!"
@@ -786,6 +795,106 @@ install_all_modules() {
     read -p "Press Enter to continue..."
 }
 
+#==============================================================================
+# PERMANENT INSTALLATION
+#==============================================================================
+
+install_to_opt() {
+    print_section "Install to /opt (Permanent)"
+    
+    local OPT_DIR="/opt/wazuh-multivendor-installer"
+    
+    # Check if already in /opt
+    if [[ "$SCRIPT_DIR" == "$OPT_DIR" ]]; then
+        print_ok "Already installed in $OPT_DIR"
+        read -p "Press Enter to continue..."
+        return 0
+    fi
+    
+    # Check if destination exists
+    if [ -d "$OPT_DIR" ]; then
+        echo ""
+        print_warn "Directory $OPT_DIR already exists"
+        echo ""
+        echo -e "  ${BOLD}Options:${NC}"
+        echo -e "  [1] Overwrite (backup existing)"
+        echo -e "  [2] Update (git pull)"
+        echo -e "  [3] Cancel"
+        echo ""
+        read -p "  Select option: " opt_choice
+        
+        case "$opt_choice" in
+            1)
+                # Backup and overwrite
+                local backup_dir="${OPT_DIR}.backup-$(date +%Y%m%d-%H%M%S)"
+                print_install "Backing up to $backup_dir"
+                mv "$OPT_DIR" "$backup_dir"
+                ;;
+            2)
+                # Git pull update
+                if [ -d "${OPT_DIR}/.git" ]; then
+                    print_install "Updating via git pull..."
+                    cd "$OPT_DIR"
+                    git pull origin main
+                    print_ok "Updated successfully"
+                    echo ""
+                    print_info "Run the installer from the new location:"
+                    echo -e "  ${CYAN}cd $OPT_DIR && sudo ./install.sh${NC}"
+                    read -p "Press Enter to continue..."
+                    return 0
+                else
+                    print_error "Not a git repository, cannot update"
+                    read -p "Press Enter to continue..."
+                    return 1
+                fi
+                ;;
+            *)
+                print_info "Cancelled"
+                read -p "Press Enter to continue..."
+                return 0
+                ;;
+        esac
+    fi
+    
+    # Copy to /opt
+    print_install "Copying to $OPT_DIR..."
+    
+    if cp -r "$SCRIPT_DIR" "$OPT_DIR"; then
+        chmod +x "${OPT_DIR}/install.sh"
+        chmod +x "${OPT_DIR}/deploy-dashboards.sh" 2>/dev/null || true
+        
+        print_ok "Installed to $OPT_DIR"
+        echo ""
+        
+        # Create symlink for easy access
+        if [ ! -f "/usr/local/bin/wazuh-installer" ]; then
+            ln -sf "${OPT_DIR}/install.sh" /usr/local/bin/wazuh-installer
+            print_ok "Created symlink: /usr/local/bin/wazuh-installer"
+            echo ""
+            print_info "You can now run the installer from anywhere:"
+            echo -e "  ${CYAN}sudo wazuh-installer${NC}"
+        fi
+        
+        echo ""
+        print_info "Or run directly:"
+        echo -e "  ${CYAN}cd $OPT_DIR && sudo ./install.sh${NC}"
+        echo ""
+        
+        # Ask if user wants to switch to new location
+        read -p "  Switch to new location now? (y/n): " switch_choice
+        if [[ "$switch_choice" =~ ^[Yy]$ ]]; then
+            echo ""
+            print_ok "Restarting from $OPT_DIR..."
+            cd "$OPT_DIR"
+            exec "${OPT_DIR}/install.sh"
+        fi
+    else
+        print_error "Failed to copy to $OPT_DIR"
+    fi
+    
+    read -p "Press Enter to continue..."
+}
+
 show_status_summary() {
     print_section "Status Summary"
     
@@ -847,6 +956,12 @@ check_prerequisites() {
     fi
     print_ok "Running as root"
     
+    # Warn if running from /tmp
+    if [[ "$SCRIPT_DIR" == /tmp/* ]]; then
+        print_warn "Running from /tmp - files will be lost on reboot!"
+        echo -e "  ${YELLOW}Use option [P] in the menu to install permanently to /opt${NC}"
+    fi
+    
     # Check Wazuh
     if [ ! -d "$WAZUH_DIR" ]; then
         print_error "Wazuh Manager not found in $WAZUH_DIR"
@@ -896,6 +1011,7 @@ show_help() {
     echo "  -a, --all           Install all modules"
     echo "  -d, --dashboards    Import dashboards only"
     echo "  -s, --status        Show status summary"
+    echo "  -p, --permanent     Install this tool to /opt"
     echo "  --interactive       Run interactive menu (default)"
     echo ""
     echo "Examples:"
@@ -942,6 +1058,11 @@ main() {
             ;;
         -d|--dashboards)
             install_dashboards
+            exit 0
+            ;;
+        -p|--permanent)
+            check_prerequisites
+            install_to_opt
             exit 0
             ;;
         -i|--install)
