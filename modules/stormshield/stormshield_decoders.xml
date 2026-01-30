@@ -7,17 +7,141 @@
   <prematch>^time="</prematch>
 </decoder>
 
-<!-- Single decoder to extract all alarm fields -->
-<decoder name="stormshield-alarm">
+<!-- Core fields: time, fw -->
+<decoder name="stormshield-core">
   <parent>stormshield</parent>
-  <prematch>logtype="alarm"</prematch>
   <regex>^time="(\d+-\d+-\d+ \d+:\d+:\d+)" fw="(\w+)"</regex>
   <order>time,fw</order>
 </decoder>
 
-<!-- Fallback -->
-<decoder name="stormshield-generic">
+<!-- Priority -->
+<decoder name="stormshield-pri">
   <parent>stormshield</parent>
-  <regex>^time="(\d+-\d+-\d+ \d+:\d+:\d+)" fw="(\w+)"</regex>
-  <order>time,fw</order>
+  <regex>pri=(\d+)</regex>
+  <order>pri</order>
+</decoder>
+
+<!-- Source IP -->
+<decoder name="stormshield-srcip">
+  <parent>stormshield</parent>
+  <regex> src=(\d+\.\d+\.\d+\.\d+)</regex>
+  <order>srcip</order>
+</decoder>
+
+<!-- Destination IP -->
+<decoder name="stormshield-dstip">
+  <parent>stormshield</parent>
+  <regex> dst=(\d+\.\d+\.\d+\.\d+)</regex>
+  <order>dstip</order>
+</decoder>
+
+<!-- Source port -->
+<decoder name="stormshield-srcport">
+  <parent>stormshield</parent>
+  <regex> srcport=(\d+)</regex>
+  <order>srcport</order>
+</decoder>
+
+<!-- Destination port -->
+<decoder name="stormshield-dstport">
+  <parent>stormshield</parent>
+  <regex> dstport=(\d+)</regex>
+  <order>dstport</order>
+</decoder>
+
+<!-- Action -->
+<decoder name="stormshield-action">
+  <parent>stormshield</parent>
+  <regex> action=(\w+)</regex>
+  <order>stormshield_action</order>
+</decoder>
+
+<!-- Message -->
+<decoder name="stormshield-msg">
+  <parent>stormshield</parent>
+  <regex> msg="([^"]+)"</regex>
+  <order>msg</order>
+</decoder>
+
+<!-- Alarm ID -->
+<decoder name="stormshield-alarmid">
+  <parent>stormshield</parent>
+  <regex> alarmid=(\d+)</regex>
+  <order>alarmid</order>
+</decoder>
+
+<!-- Log type -->
+<decoder name="stormshield-logtype">
+  <parent>stormshield</parent>
+  <regex> logtype="(\w+)"</regex>
+  <order>logtype</order>
+</decoder>
+
+<!-- Protocol -->
+<decoder name="stormshield-ipproto">
+  <parent>stormshield</parent>
+  <regex> ipproto=(\w+)</regex>
+  <order>ipproto</order>
+</decoder>
+
+<!-- User (for auth logs) -->
+<decoder name="stormshield-user">
+  <parent>stormshield</parent>
+  <regex> user="([^"]+)"</regex>
+  <order>user</order>
+</decoder>
+
+<!-- Address (for auth logs) -->
+<decoder name="stormshield-address">
+  <parent>stormshield</parent>
+  <regex> address=(\S+)</regex>
+  <order>address</order>
+</decoder>
+
+<!-- Error (for auth logs) -->
+<decoder name="stormshield-error">
+  <parent>stormshield</parent>
+  <regex> error=(\d+)</regex>
+  <order>error</order>
+</decoder>
+
+<!-- Rule ID -->
+<decoder name="stormshield-ruleid">
+  <parent>stormshield</parent>
+  <regex> ruleid=(\d+)</regex>
+  <order>ruleid</order>
+</decoder>
+
+<!-- Class -->
+<decoder name="stormshield-class">
+  <parent>stormshield</parent>
+  <regex> class=(\w+)</regex>
+  <order>class</order>
+</decoder>
+
+<!-- Source interface name -->
+<decoder name="stormshield-srcifname">
+  <parent>stormshield</parent>
+  <regex> srcifname="([^"]+)"</regex>
+  <order>srcifname</order>
+</decoder>
+
+<!-- Destination interface name -->
+<decoder name="stormshield-dstifname">
+  <parent>stormshield</parent>
+  <regex> dstifname="([^"]+)"</regex>
+  <order>dstifname</order>
+</decoder>
+
+<!-- Country -->
+<decoder name="stormshield-dstcountry">
+  <parent>stormshield</parent>
+  <regex> dstcountry="(\w+)"</regex>
+  <order>dstcountry</order>
+</decoder>
+
+<decoder name="stormshield-srccountry">
+  <parent>stormshield</parent>
+  <regex> srccountry="(\w+)"</regex>
+  <order>srccountry</order>
 </decoder>
