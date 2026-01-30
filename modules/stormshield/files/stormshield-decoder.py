@@ -36,6 +36,9 @@ logger = logging.getLogger(__name__)
 # Regex pattern to extract key=value or key="value" pairs from WELF format
 WELF_PATTERN = re.compile(r'(\w+)=(?:"([^"]*)"|(\S+))')
 
+# Pattern to extract IP from admin login message
+ADMIN_IP_PATTERN = re.compile(r'administrative intervention \((\d+\.\d+\.\d+\.\d+)\)')
+
 # Fields to always include in output (with proper names for Wazuh)
 FIELD_MAPPING = {
     'time': 'time',
@@ -147,6 +150,18 @@ def process_log(log_line):
         logger.warning(f"Failed to parse WELF format")
         return log_line
     
+    # Extract IP from admin login message if present
+    msg = fields.get('msg', '')
+    if 'administrative intervention' in msg:
+        ip_match = ADMIN_IP_PATTERN.search(msg)
+        if ip_match:
+            fields['address'] = ip_match.group(1)
+            fields['srcip'] = ip_match.group(1)
+    
+    # Ensure address is populated from srcip if not set (for consistency)
+    if not fields.get('address') and fields.get('srcip'):
+        fields['address'] = fields.get('srcip')
+    
     # Build JSON event
     event = {
         "integration": "stormshield",
@@ -158,8 +173,8 @@ def process_log(log_line):
     action = fields.get('action', '')
     srcip = fields.get('srcip', '')
     dstip = fields.get('dstip', '')
-    msg = fields.get('msg', '')
     user = fields.get('user', '')
+    address = fields.get('address', '')
     
     json_log = json.dumps(event)
     
@@ -167,11 +182,13 @@ def process_log(log_line):
     if logtype == 'alarm':
         logger.info(f"🚨 ALARM: {srcip} → {dstip} | {action} | {msg}")
     elif logtype == 'auth':
-        logger.info(f"🔐 AUTH: {user}@{fields.get('address', '')} | error={fields.get('error', 'none')}")
+        logger.info(f"🔐 AUTH: {user}@{address} | error={fields.get('error', 'none')}")
     elif logtype == 'vpn':
         logger.info(f"🔒 VPN: {srcip} → {dstip} | {msg}")
     elif logtype == 'server':
-        logger.info(f"👤 ADMIN: {user}@{fields.get('address', '')} | {msg}")
+        logger.info(f"👤 ADMIN: {user}@{address} | {msg}")
+    elif logtype == 'system' and 'administrative' in msg:
+        logger.info(f"🔑 LOGIN: {user}@{address} | {msg}")
     elif logtype in ('connection', 'filter'):
         logger.info(f"🌐 {logtype.upper()}: {srcip}:{fields.get('srcport', '')} → {dstip}:{fields.get('dstport', '')} | {action}")
     else:
