@@ -1,18 +1,18 @@
 <!-- Stormshield Firewall Decoders for Wazuh -->
 <!-- https://github.com/grandir66/wazuh-multivendor-installer -->
 <!-- Rule IDs: 100400-100499 -->
-<!-- Works with rsyslog cleaned WELF format -->
+<!-- Works with rsyslog cleaned WELF format (starts with time=) -->
 
-<!-- Main Stormshield decoder - matches clean WELF format -->
+<!-- Main Stormshield decoder - matches cleaned format starting with time= -->
 <decoder name="stormshield">
-  <prematch>^id=firewall</prematch>
+  <prematch>^time="</prematch>
 </decoder>
 
 <!-- Alarm logs -->
 <decoder name="stormshield-alarm">
   <parent>stormshield</parent>
   <prematch>logtype="alarm"</prematch>
-  <regex offset="after_parent"> time="(\S+ \S+)" fw="(\S+)" \.+ pri=(\d+) \.+ src=(\d+\.\d+\.\d+\.\d+) \.+ dst=(\d+\.\d+\.\d+\.\d+) \.+ action=(\w+) msg="(\.+)" \.+ alarmid=(\d+)</regex>
+  <regex>time="(\S+ \S+)" fw="(\S+)" \.+ pri=(\d+) \.+ src=(\d+\.\d+\.\d+\.\d+) \.+ dst=(\d+\.\d+\.\d+\.\d+) \.+ action=(\w+) msg="(\.+)" \.+ alarmid=(\d+)</regex>
   <order>time,fw,pri,srcip,dstip,stormshield_action,msg,alarmid</order>
 </decoder>
 
@@ -20,7 +20,7 @@
 <decoder name="stormshield-connection">
   <parent>stormshield</parent>
   <prematch>logtype="connection"</prematch>
-  <regex offset="after_parent"> time="(\S+ \S+)" fw="(\S+)" \.+ pri=(\d+) \.+ src=(\d+\.\d+\.\d+\.\d+) srcport=(\d+) \.+ dst=(\d+\.\d+\.\d+\.\d+) dstport=(\d+) \.+ action=(\w+)</regex>
+  <regex>time="(\S+ \S+)" fw="(\S+)" \.+ pri=(\d+) \.+ src=(\d+\.\d+\.\d+\.\d+) srcport=(\d+) \.+ dst=(\d+\.\d+\.\d+\.\d+) dstport=(\d+) \.+ action=(\w+)</regex>
   <order>time,fw,pri,srcip,srcport,dstip,dstport,stormshield_action</order>
 </decoder>
 
@@ -28,7 +28,7 @@
 <decoder name="stormshield-filter">
   <parent>stormshield</parent>
   <prematch>logtype="filter"</prematch>
-  <regex offset="after_parent"> time="(\S+ \S+)" fw="(\S+)" \.+ pri=(\d+) \.+ src=(\d+\.\d+\.\d+\.\d+) srcport=(\d+) \.+ dst=(\d+\.\d+\.\d+\.\d+) dstport=(\d+) \.+ action=(\w+)</regex>
+  <regex>time="(\S+ \S+)" fw="(\S+)" \.+ pri=(\d+) \.+ src=(\d+\.\d+\.\d+\.\d+) srcport=(\d+) \.+ dst=(\d+\.\d+\.\d+\.\d+) dstport=(\d+) \.+ action=(\w+)</regex>
   <order>time,fw,pri,srcip,srcport,dstip,dstport,stormshield_action</order>
 </decoder>
 
@@ -36,7 +36,7 @@
 <decoder name="stormshield-auth">
   <parent>stormshield</parent>
   <prematch>logtype="auth"</prematch>
-  <regex offset="after_parent"> time="(\S+ \S+)" fw="(\S+)" \.+ user="(\.+)" \.+ address=(\S+)</regex>
+  <regex>time="(\S+ \S+)" fw="(\S+)" \.+ user="(\.+)" \.+ address=(\S+)</regex>
   <order>time,fw,user,address</order>
 </decoder>
 
@@ -44,7 +44,7 @@
 <decoder name="stormshield-server">
   <parent>stormshield</parent>
   <prematch>logtype="server"</prematch>
-  <regex offset="after_parent"> time="(\S+ \S+)" fw="(\S+)" \.+ user="(\.+)" \.+ address=(\S+)</regex>
+  <regex>time="(\S+ \S+)" fw="(\S+)" \.+ user="(\.+)" \.+ address=(\S+)</regex>
   <order>time,fw,user,address</order>
 </decoder>
 
@@ -52,7 +52,7 @@
 <decoder name="stormshield-vpn">
   <parent>stormshield</parent>
   <prematch>logtype="vpn"</prematch>
-  <regex offset="after_parent"> time="(\S+ \S+)" fw="(\S+)" \.+ src=(\d+\.\d+\.\d+\.\d+) \.+ dst=(\d+\.\d+\.\d+\.\d+)</regex>
+  <regex>time="(\S+ \S+)" fw="(\S+)" \.+ src=(\d+\.\d+\.\d+\.\d+) \.+ dst=(\d+\.\d+\.\d+\.\d+)</regex>
   <order>time,fw,srcip,dstip</order>
 </decoder>
 
@@ -60,13 +60,13 @@
 <decoder name="stormshield-system">
   <parent>stormshield</parent>
   <prematch>logtype="system"</prematch>
-  <regex offset="after_parent"> time="(\S+ \S+)" fw="(\S+)" \.+ msg="(\.+)"</regex>
+  <regex>time="(\S+ \S+)" fw="(\S+)" \.+ msg="(\.+)"</regex>
   <order>time,fw,msg</order>
 </decoder>
 
 <!-- Fallback - extract basic fields -->
 <decoder name="stormshield-generic">
   <parent>stormshield</parent>
-  <regex offset="after_parent"> time="(\S+ \S+)" fw="(\S+)"</regex>
+  <regex>time="(\S+ \S+)" fw="(\S+)"</regex>
   <order>time,fw</order>
 </decoder>
