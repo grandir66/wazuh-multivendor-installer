@@ -1,0 +1,275 @@
+<group name="mikrotik">
+  <!-- ============================================== -->
+  <!-- Mikrotik Rules for Wazuh                       -->
+  <!-- https://github.com/grandir66/WazuhMikrotik     -->
+  <!-- Rule IDs: 100200-100299                        -->
+  <!-- ============================================== -->
+
+  <!-- ============================================== -->
+  <!-- Authentication Rules (100200-100209)           -->
+  <!-- ============================================== -->
+  
+  <rule id="100200" level="10">
+    <decoded_as>mikrotik_log</decoded_as>
+    <description>Mikrotik: $(type) $(target) $(action) by $(username) from $(srcip): $(rule_details)</description>
+  </rule>
+  
+  <rule id="100201" level="12">
+    <decoded_as>user_login</decoded_as>
+    <description>Mikrotik: User $(username) logged $(action) from $(srcip) via $(access_method)</description>
+  </rule>
+  
+  <rule id="100202" level="11">
+    <decoded_as>user_login_failure</decoded_as>
+    <description>Mikrotik: Login failure for user $(username) from $(srcip) via $(access_method)</description>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+  </rule>
+
+  <rule id="100203" level="10">
+    <decoded_as>wireguard</decoded_as>
+    <description>Mikrotik: WireGuard user $(username) logged $(action) from $(srcip)</description>
+  </rule>
+
+  <rule id="100204" level="10">
+    <decoded_as>ovpn</decoded_as>
+    <description>Mikrotik: OpenVPN $(action) logged, $(localip) from $(srcip)</description>
+  </rule>
+
+  <rule id="100205" level="12">
+    <decoded_as>filter_rule_change</decoded_as>
+    <description>Mikrotik: Filter rule $(action) by $(username) from $(srcip): $(rule_details)</description>
+    <mitre>
+      <id>T1562.004</id>
+    </mitre>
+  </rule>
+
+  <rule id="100206" level="12">
+    <decoded_as>raw_rule_change</decoded_as>
+    <description>Mikrotik: Raw rule $(action) by $(username) from $(srcip): $(rule_details)</description>
+    <mitre>
+      <id>T1562.004</id>
+    </mitre>
+  </rule>
+
+  <rule id="100207" level="12">
+    <decoded_as>user_change</decoded_as>
+    <description>Mikrotik: User $(newuser) $(action) by $(username) from $(srcip): $(rule_details)</description>
+    <mitre>
+      <id>T1136</id>
+    </mitre>
+  </rule>
+
+  <!-- ============================================== -->
+  <!-- DHCP Server Rules (100210-100219)              -->
+  <!-- ============================================== -->
+
+  <rule id="100210" level="3">
+    <decoded_as>dhcp_assigned</decoded_as>
+    <description>Mikrotik DHCP: Lease assigned $(dstip) to $(srcmac) $(hostname) on server $(dhcp_server)</description>
+    <group>mikrotik,dhcp</group>
+  </rule>
+
+  <rule id="100211" level="3">
+    <decoded_as>dhcp_deassigned</decoded_as>
+    <description>Mikrotik DHCP: Lease released $(dstip) from $(srcmac) $(hostname) on server $(dhcp_server)</description>
+    <group>mikrotik,dhcp</group>
+  </rule>
+
+  <rule id="100212" level="5">
+    <decoded_as>dhcp_no_address</decoded_as>
+    <description>Mikrotik DHCP: Could not assign address to $(srcmac) on server $(dhcp_server) - Pool exhausted or conflict</description>
+    <group>mikrotik,dhcp</group>
+  </rule>
+
+  <rule id="100213" level="3">
+    <decoded_as>dhcp_got_address</decoded_as>
+    <description>Mikrotik DHCP Client: Got address $(dstip) on interface $(interface)</description>
+    <group>mikrotik,dhcp</group>
+  </rule>
+
+  <rule id="100214" level="3">
+    <decoded_as>dhcp_renewed</decoded_as>
+    <description>Mikrotik DHCP Client: Renewed address $(dstip) on interface $(interface)</description>
+    <group>mikrotik,dhcp</group>
+  </rule>
+
+  <rule id="100215" level="4">
+    <decoded_as>dhcp_released</decoded_as>
+    <description>Mikrotik DHCP Client: Released address $(dstip) on interface $(interface)</description>
+    <group>mikrotik,dhcp</group>
+  </rule>
+
+  <rule id="100216" level="5">
+    <decoded_as>dhcp_waiting</decoded_as>
+    <description>Mikrotik DHCP Client: Waiting for $(wait_type) on interface $(interface)</description>
+    <group>mikrotik,dhcp</group>
+  </rule>
+
+  <!-- DHCP Correlation Rules -->
+  <rule id="100217" level="8" frequency="10" timeframe="60">
+    <if_matched_sid>100210</if_matched_sid>
+    <same_field>dhcp_server</same_field>
+    <description>Mikrotik DHCP: High volume of lease assignments (10+ in 60s) - Possible DHCP starvation attack</description>
+    <group>mikrotik,dhcp,attack</group>
+    <mitre>
+      <id>T1557</id>
+    </mitre>
+  </rule>
+
+  <rule id="100218" level="10" frequency="5" timeframe="60">
+    <if_matched_sid>100212</if_matched_sid>
+    <same_field>dhcp_server</same_field>
+    <description>Mikrotik DHCP: Multiple address assignment failures - Pool exhausted or DHCP attack</description>
+    <group>mikrotik,dhcp,attack</group>
+    <mitre>
+      <id>T1498</id>
+    </mitre>
+  </rule>
+
+  <!-- ============================================== -->
+  <!-- System Configuration Change Rules (100220-100239) -->
+  <!-- ============================================== -->
+
+  <rule id="100220" level="6">
+    <decoded_as>system_item_change</decoded_as>
+    <description>Mikrotik System: Item $(action) by $(username)</description>
+    <group>mikrotik,config_change</group>
+  </rule>
+
+  <rule id="100221" level="8">
+    <decoded_as>mangle_rule_change</decoded_as>
+    <description>Mikrotik Firewall: Mangle rule $(action) by $(username)</description>
+    <group>mikrotik,config_change,firewall</group>
+    <mitre>
+      <id>T1562.004</id>
+    </mitre>
+  </rule>
+
+  <rule id="100222" level="8">
+    <decoded_as>nat_rule_change</decoded_as>
+    <description>Mikrotik Firewall: NAT rule $(action) by $(username)</description>
+    <group>mikrotik,config_change,firewall</group>
+    <mitre>
+      <id>T1562.004</id>
+    </mitre>
+  </rule>
+
+  <rule id="100223" level="7">
+    <decoded_as>address_list_change</decoded_as>
+    <description>Mikrotik Firewall: Address list $(action) by $(username)</description>
+    <group>mikrotik,config_change,firewall</group>
+  </rule>
+
+  <rule id="100224" level="6">
+    <decoded_as>queue_rule_change</decoded_as>
+    <description>Mikrotik QoS: Queue $(action) by $(username)</description>
+    <group>mikrotik,config_change</group>
+  </rule>
+
+  <rule id="100225" level="8">
+    <decoded_as>script_change</decoded_as>
+    <description>Mikrotik System: Script $(action) by $(username)</description>
+    <group>mikrotik,config_change</group>
+    <mitre>
+      <id>T1059</id>
+    </mitre>
+  </rule>
+
+  <rule id="100226" level="7">
+    <decoded_as>scheduler_change</decoded_as>
+    <description>Mikrotik System: Scheduler task $(action) by $(username)</description>
+    <group>mikrotik,config_change</group>
+    <mitre>
+      <id>T1053</id>
+    </mitre>
+  </rule>
+
+  <rule id="100227" level="7">
+    <decoded_as>interface_change</decoded_as>
+    <description>Mikrotik Interface: $(interface) $(action) by $(username)</description>
+    <group>mikrotik,config_change</group>
+  </rule>
+
+  <rule id="100228" level="7">
+    <decoded_as>ip_address_change</decoded_as>
+    <description>Mikrotik Network: IP address $(action) by $(username)</description>
+    <group>mikrotik,config_change</group>
+  </rule>
+
+  <rule id="100229" level="7">
+    <decoded_as>route_change</decoded_as>
+    <description>Mikrotik Routing: Route $(action) by $(username)</description>
+    <group>mikrotik,config_change</group>
+  </rule>
+
+  <rule id="100230" level="7">
+    <decoded_as>dns_change</decoded_as>
+    <description>Mikrotik DNS: $(action) by $(username)</description>
+    <group>mikrotik,config_change</group>
+  </rule>
+
+  <rule id="100231" level="10">
+    <decoded_as>system_reboot</decoded_as>
+    <description>Mikrotik System: Router rebooted</description>
+    <group>mikrotik,system</group>
+  </rule>
+
+  <rule id="100232" level="8">
+    <decoded_as>system_upgrade</decoded_as>
+    <description>Mikrotik System: Upgraded from $(old_version) to $(new_version)</description>
+    <group>mikrotik,system</group>
+  </rule>
+
+  <rule id="100233" level="8">
+    <decoded_as>backup_operation</decoded_as>
+    <description>Mikrotik System: Backup $(action) by $(username)</description>
+    <group>mikrotik,config_change</group>
+  </rule>
+
+  <rule id="100234" level="8">
+    <decoded_as>config_export</decoded_as>
+    <description>Mikrotik System: Configuration exported by $(username)</description>
+    <group>mikrotik,config_change</group>
+    <mitre>
+      <id>T1005</id>
+    </mitre>
+  </rule>
+
+  <!-- ============================================== -->
+  <!-- Correlation Rules for Suspicious Activity      -->
+  <!-- (100240-100249)                                -->
+  <!-- ============================================== -->
+
+  <rule id="100240" level="12" frequency="5" timeframe="300">
+    <if_matched_sid>100202</if_matched_sid>
+    <same_field>srcip</same_field>
+    <description>Mikrotik Security: Brute force attack detected - 5+ login failures from $(srcip)</description>
+    <group>mikrotik,authentication_failure,attack</group>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+  </rule>
+
+  <rule id="100241" level="10" frequency="10" timeframe="60">
+    <if_matched_group>config_change</if_matched_group>
+    <same_field>username</same_field>
+    <description>Mikrotik Security: Rapid configuration changes by $(username) - Possible compromise</description>
+    <group>mikrotik,config_change,attack</group>
+    <mitre>
+      <id>T1562</id>
+    </mitre>
+  </rule>
+
+  <rule id="100242" level="12">
+    <if_sid>100221,100222,100205,100206</if_sid>
+    <match>removed</match>
+    <description>Mikrotik Security: Firewall rule REMOVED - Defense evasion</description>
+    <group>mikrotik,config_change,firewall,attack</group>
+    <mitre>
+      <id>T1562.004</id>
+    </mitre>
+  </rule>
+
+</group>

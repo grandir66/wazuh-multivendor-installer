@@ -1,0 +1,215 @@
+<!-- QNAP NAS Rules for Wazuh -->
+<!-- https://github.com/grandir66/wazuh-multivendor-installer -->
+<!-- Rule IDs: 100300-100399 -->
+
+<group name="qnap,fileserver">
+
+  <!-- ============================================== -->
+  <!-- Base Rules (100300-100309)                    -->
+  <!-- ============================================== -->
+
+  <rule id="100300" level="3">
+    <decoded_as>qnap-qulogd</decoded_as>
+    <description>QNAP: Connection log event detected</description>
+    <group>qnap,connection</group>
+  </rule>
+
+  <!-- ============================================== -->
+  <!-- File Operation Rules (100310-100319)          -->
+  <!-- ============================================== -->
+
+  <rule id="100310" level="5">
+    <if_sid>100300</if_sid>
+    <match>Action: Write</match>
+    <description>QNAP: File write operation by $(user) from $(srcip)</description>
+    <group>qnap,file_write</group>
+  </rule>
+
+  <rule id="100311" level="4">
+    <if_sid>100300</if_sid>
+    <match>Action: Read</match>
+    <description>QNAP: File read operation by $(user) from $(srcip)</description>
+    <group>qnap,file_read</group>
+  </rule>
+
+  <rule id="100312" level="7">
+    <if_sid>100300</if_sid>
+    <match>Action: Delete</match>
+    <description>QNAP: File deletion by $(user) from $(srcip)</description>
+    <group>qnap,file_delete</group>
+  </rule>
+
+  <rule id="100313" level="4">
+    <if_sid>100300</if_sid>
+    <match>Action: Rename</match>
+    <description>QNAP: File renamed by $(user) from $(srcip)</description>
+    <group>qnap,file_rename</group>
+  </rule>
+
+  <rule id="100314" level="4">
+    <if_sid>100300</if_sid>
+    <match>Action: Move</match>
+    <description>QNAP: File moved by $(user) from $(srcip)</description>
+    <group>qnap,file_move</group>
+  </rule>
+
+  <!-- ============================================== -->
+  <!-- Protocol-specific Rules (100320-100329)       -->
+  <!-- ============================================== -->
+
+  <rule id="100320" level="4">
+    <if_sid>100300</if_sid>
+    <match>Connection type: Samba</match>
+    <description>QNAP: SMB/Samba access by $(user) from $(srcip)</description>
+    <group>qnap,smb_access</group>
+  </rule>
+
+  <rule id="100321" level="4">
+    <if_sid>100300</if_sid>
+    <regex>Connection type: HTTPS?</regex>
+    <description>QNAP: Web interface access by $(user) from $(srcip)</description>
+    <group>qnap,web_access</group>
+  </rule>
+
+  <rule id="100322" level="5">
+    <if_sid>100300</if_sid>
+    <match>Connection type: FTP</match>
+    <description>QNAP: FTP access by $(user) from $(srcip)</description>
+    <group>qnap,ftp_access</group>
+  </rule>
+
+  <rule id="100323" level="5">
+    <if_sid>100300</if_sid>
+    <match>Connection type: AFP</match>
+    <description>QNAP: AFP access by $(user) from $(srcip)</description>
+    <group>qnap,afp_access</group>
+  </rule>
+
+  <!-- ============================================== -->
+  <!-- Authentication Rules (100330-100339)          -->
+  <!-- ============================================== -->
+
+  <rule id="100330" level="5">
+    <decoded_as>qnap-ssh</decoded_as>
+    <match>Login OK</match>
+    <description>QNAP: SSH login successful from $(srcip)</description>
+    <group>qnap,authentication_success</group>
+  </rule>
+
+  <rule id="100331" level="8">
+    <decoded_as>qnap-ssh</decoded_as>
+    <match>Login Fail</match>
+    <description>QNAP: SSH login failed from $(srcip)</description>
+    <group>qnap,authentication_failed</group>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+  </rule>
+
+  <rule id="100332" level="5">
+    <decoded_as>qnap-http</decoded_as>
+    <match>Login OK</match>
+    <description>QNAP: Web login successful from $(srcip)</description>
+    <group>qnap,authentication_success</group>
+  </rule>
+
+  <rule id="100333" level="7">
+    <decoded_as>qnap-http</decoded_as>
+    <match>Login Fail</match>
+    <description>QNAP: Web login failed from $(srcip)</description>
+    <group>qnap,authentication_failed</group>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+  </rule>
+
+  <!-- ============================================== -->
+  <!-- System Events (100340-100349)                 -->
+  <!-- ============================================== -->
+
+  <rule id="100340" level="10">
+    <decoded_as>qnap-system</decoded_as>
+    <match>System startup</match>
+    <description>QNAP: System startup</description>
+    <group>qnap,system</group>
+  </rule>
+
+  <rule id="100341" level="10">
+    <decoded_as>qnap-system</decoded_as>
+    <match>System shutdown</match>
+    <description>QNAP: System shutdown</description>
+    <group>qnap,system</group>
+  </rule>
+
+  <rule id="100342" level="8">
+    <decoded_as>qnap-system</decoded_as>
+    <match>Firmware updated</match>
+    <description>QNAP: Firmware updated</description>
+    <group>qnap,system</group>
+  </rule>
+
+  <!-- ============================================== -->
+  <!-- Correlation Rules (100350-100359)             -->
+  <!-- ============================================== -->
+
+  <rule id="100350" level="12" frequency="5" timeframe="300">
+    <if_matched_sid>100331</if_matched_sid>
+    <same_field>srcip</same_field>
+    <description>QNAP: Brute force attack detected - Multiple SSH failures from $(srcip)</description>
+    <group>qnap,attack,brute_force</group>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+  </rule>
+
+  <rule id="100351" level="12" frequency="5" timeframe="300">
+    <if_matched_sid>100333</if_matched_sid>
+    <same_field>srcip</same_field>
+    <description>QNAP: Brute force attack detected - Multiple Web login failures from $(srcip)</description>
+    <group>qnap,attack,brute_force</group>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+  </rule>
+
+  <rule id="100352" level="10" frequency="10" timeframe="60">
+    <if_matched_sid>100312</if_matched_sid>
+    <same_field>srcip</same_field>
+    <description>QNAP: Possible ransomware - Multiple file deletions from $(srcip)</description>
+    <group>qnap,attack,ransomware</group>
+    <mitre>
+      <id>T1485</id>
+      <id>T1486</id>
+    </mitre>
+  </rule>
+
+  <rule id="100353" level="8" frequency="50" timeframe="300">
+    <if_matched_sid>100311</if_matched_sid>
+    <same_field>srcip</same_field>
+    <description>QNAP: Possible data exfiltration - Massive file reads from $(srcip)</description>
+    <group>qnap,anomaly,exfiltration</group>
+    <mitre>
+      <id>T1039</id>
+      <id>T1005</id>
+    </mitre>
+  </rule>
+
+  <!-- ============================================== -->
+  <!-- Time-based Anomaly Rules (100360-100369)      -->
+  <!-- ============================================== -->
+
+  <rule id="100360" level="6">
+    <if_sid>100300</if_sid>
+    <time>22:00 - 06:00</time>
+    <description>QNAP: After-hours file access by $(user) from $(srcip)</description>
+    <group>qnap,anomaly,after_hours</group>
+  </rule>
+
+  <rule id="100361" level="5">
+    <if_sid>100300</if_sid>
+    <weekday>saturday,sunday</weekday>
+    <description>QNAP: Weekend file access by $(user) from $(srcip)</description>
+    <group>qnap,anomaly,weekend</group>
+  </rule>
+
+</group>

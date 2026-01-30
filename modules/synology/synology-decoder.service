@@ -1,0 +1,20 @@
+[Unit]
+Description=Synology JSON Decoder for Wazuh
+After=network.target wazuh-manager.service
+Documentation=https://github.com/grandir66/wazuh-synology-json-integration
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 /usr/local/bin/synology-json-decoder.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

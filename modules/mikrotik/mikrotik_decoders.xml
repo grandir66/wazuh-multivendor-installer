@@ -1,0 +1,210 @@
+<!-- Mikrotik Decoders for Wazuh -->
+<!-- https://github.com/grandir66/WazuhMikrotik -->
+
+<decoder name="user_login">
+  <prematch>user (\S+) logged (\S+) from (\S+) via (\S+)</prematch>
+  <regex type="pcre2">user (\S+) logged (\S+) from (\S+) via (\S+)</regex>
+  <order>username, action, srcip, access_method</order>
+</decoder>
+
+<decoder name="user_login_failure">
+  <prematch>login failure for user (\S+) from (\S+) via (\S+)</prematch>
+  <regex type="pcre2">login failure for user (\S+) from (\S+) via (\S+)</regex>
+  <order>username, srcip, access_method</order>
+</decoder>
+
+<decoder name="wireguard">
+  <prematch>wireguard user (\S+) logged (\S+) from (\S+)</prematch>
+  <regex type="pcre2">wireguard user (\S+) logged (\S+) from (\S+)</regex>
+  <order>username, action, srcip</order>
+</decoder>
+
+<decoder name="ovpn">
+  <prematch>(\S+) logged (\S+), (\S+) from (\S+)</prematch>
+  <regex type="pcre2">(\S+) logged (\S+), (\S+) from (\S+)</regex>
+  <order>username, action, localip, srcip</order>
+</decoder>
+
+<decoder name="filter_rule_change">
+  <prematch type="pcre2">filter rule (changed|removed|added) by</prematch>
+  <regex type="pcre2">filter rule (changed|removed|added) by tcp-msg\(winbox\):(\S+)@(\S+) \((.*)\)</regex>
+  <order>action, username, srcip, rule_details</order>
+</decoder>
+
+<decoder name="raw_rule_change">
+  <prematch type="pcre2">raw rule (changed|removed|added) by</prematch>
+  <regex type="pcre2">raw rule (changed|removed|added) by tcp-msg\(winbox\):(\S+)@(\S+) \((.*)\)</regex>
+  <order>action, username, srcip, rule_details</order>
+</decoder>
+
+<decoder name="user_change">
+  <prematch type="pcre2">user (\S+) (added|password changed|removed) by</prematch>
+  <regex type="pcre2">user (\S+) (added|password changed|removed) by tcp-msg\(winbox\):(\S+)@(\S+) \((.*)\)</regex>
+  <order>action, newuser, username, srcip, rule_details</order>
+</decoder>
+
+<decoder name="mikrotik_log">
+  <prematch type="pcre2">(\S+) (\S+) (\S+) by</prematch>
+  <regex type="pcre2">(\S+) (\S+) (\S+) by tcp-msg\(winbox\):(\S+)@(\S+) \((.*)\)</regex>
+  <order>type, target, action, username, srcip, rule_details</order>
+</decoder>
+
+<!-- ============================================== -->
+<!-- DHCP Server Decoders                           -->
+<!-- ============================================== -->
+
+<!-- DHCP lease assigned: defconf assigned 192.168.88.37 for B0:E4:5C:27:EF:F2 Samsung -->
+<decoder name="dhcp_assigned">
+  <prematch type="pcre2">(\S+) assigned (\S+) for (\S+)</prematch>
+  <regex type="pcre2">(\S+) assigned (\S+) for (\S+)\s*(.*)?</regex>
+  <order>dhcp_server, dstip, srcmac, hostname</order>
+</decoder>
+
+<!-- DHCP lease deassigned: defconf deassigned 192.168.88.37 for B0:E4:5C:27:EF:F2 Samsung -->
+<decoder name="dhcp_deassigned">
+  <prematch type="pcre2">(\S+) deassigned (\S+) for (\S+)</prematch>
+  <regex type="pcre2">(\S+) deassigned (\S+) for (\S+)\s*(.*)?</regex>
+  <order>dhcp_server, dstip, srcmac, hostname</order>
+</decoder>
+
+<!-- DHCP lease waiting: waiting for gateway (with retry) -->
+<decoder name="dhcp_waiting">
+  <prematch type="pcre2">dhcp-client.*waiting for</prematch>
+  <regex type="pcre2">dhcp-client on (\S+) waiting for (\S+)</regex>
+  <order>interface, wait_type</order>
+</decoder>
+
+<!-- DHCP got address: dhcp-client on ether1 got address 192.168.1.100 -->
+<decoder name="dhcp_got_address">
+  <prematch type="pcre2">dhcp-client.*got address</prematch>
+  <regex type="pcre2">dhcp-client on (\S+) got address (\S+)</regex>
+  <order>interface, dstip</order>
+</decoder>
+
+<!-- DHCP lease renewed -->
+<decoder name="dhcp_renewed">
+  <prematch type="pcre2">dhcp-client.*renewed</prematch>
+  <regex type="pcre2">dhcp-client on (\S+) renewed address (\S+)</regex>
+  <order>interface, dstip</order>
+</decoder>
+
+<!-- DHCP lease released -->
+<decoder name="dhcp_released">
+  <prematch type="pcre2">dhcp-client.*released</prematch>
+  <regex type="pcre2">dhcp-client on (\S+) released address (\S+)</regex>
+  <order>interface, dstip</order>
+</decoder>
+
+<!-- DHCP server could not assign: could not assign address to MAC -->
+<decoder name="dhcp_no_address">
+  <prematch type="pcre2">could not assign</prematch>
+  <regex type="pcre2">(\S+) could not assign address to (\S+)</regex>
+  <order>dhcp_server, srcmac</order>
+</decoder>
+
+<!-- ============================================== -->
+<!-- System Configuration Change Decoders          -->
+<!-- ============================================== -->
+
+<!-- Generic system item change: item added/changed/removed by admin -->
+<decoder name="system_item_change">
+  <prematch type="pcre2">item (added|changed|removed|moved) by</prematch>
+  <regex type="pcre2">item (added|changed|removed|moved) by (\S+)</regex>
+  <order>action, username</order>
+</decoder>
+
+<!-- Mangle rule change: mangle rule added/changed/removed/moved by admin -->
+<decoder name="mangle_rule_change">
+  <prematch type="pcre2">mangle rule (added|changed|removed|moved) by</prematch>
+  <regex type="pcre2">mangle rule (added|changed|removed|moved) by (\S+)</regex>
+  <order>action, username</order>
+</decoder>
+
+<!-- NAT rule change: nat rule added/changed/removed/moved by admin -->
+<decoder name="nat_rule_change">
+  <prematch type="pcre2">nat rule (added|changed|removed|moved) by</prematch>
+  <regex type="pcre2">nat rule (added|changed|removed|moved) by (\S+)</regex>
+  <order>action, username</order>
+</decoder>
+
+<!-- Address list change: address-list entry added/changed/removed by admin -->
+<decoder name="address_list_change">
+  <prematch type="pcre2">address-list entry (added|changed|removed) by</prematch>
+  <regex type="pcre2">address-list entry (added|changed|removed) by (\S+)</regex>
+  <order>action, username</order>
+</decoder>
+
+<!-- Queue rule change: queue rule added/changed/removed by admin -->
+<decoder name="queue_rule_change">
+  <prematch type="pcre2">queue (added|changed|removed|moved) by</prematch>
+  <regex type="pcre2">queue (added|changed|removed|moved) by (\S+)</regex>
+  <order>action, username</order>
+</decoder>
+
+<!-- Script change: script added/changed/removed by admin -->
+<decoder name="script_change">
+  <prematch type="pcre2">script (added|changed|removed) by</prematch>
+  <regex type="pcre2">script (added|changed|removed) by (\S+)</regex>
+  <order>action, username</order>
+</decoder>
+
+<!-- Scheduler change: scheduler added/changed/removed by admin -->
+<decoder name="scheduler_change">
+  <prematch type="pcre2">scheduler (added|changed|removed) by</prematch>
+  <regex type="pcre2">scheduler (added|changed|removed) by (\S+)</regex>
+  <order>action, username</order>
+</decoder>
+
+<!-- Interface change: interface configuration changed -->
+<decoder name="interface_change">
+  <prematch type="pcre2">interface (\S+) (added|changed|removed|disabled|enabled) by</prematch>
+  <regex type="pcre2">interface (\S+) (added|changed|removed|disabled|enabled) by (\S+)</regex>
+  <order>interface, action, username</order>
+</decoder>
+
+<!-- IP address change: ip address added/changed/removed by admin -->
+<decoder name="ip_address_change">
+  <prematch type="pcre2">ip address (added|changed|removed) by</prematch>
+  <regex type="pcre2">ip address (added|changed|removed) by (\S+)</regex>
+  <order>action, username</order>
+</decoder>
+
+<!-- Route change: route added/changed/removed by admin -->
+<decoder name="route_change">
+  <prematch type="pcre2">route (added|changed|removed) by</prematch>
+  <regex type="pcre2">route (added|changed|removed) by (\S+)</regex>
+  <order>action, username</order>
+</decoder>
+
+<!-- DNS settings change -->
+<decoder name="dns_change">
+  <prematch type="pcre2">dns (settings changed|static entry added|static entry removed) by</prematch>
+  <regex type="pcre2">dns (settings changed|static entry added|static entry removed) by (\S+)</regex>
+  <order>action, username</order>
+</decoder>
+
+<!-- System reboot -->
+<decoder name="system_reboot">
+  <prematch type="pcre2">router rebooted</prematch>
+</decoder>
+
+<!-- System upgrade -->
+<decoder name="system_upgrade">
+  <prematch type="pcre2">system upgraded</prematch>
+  <regex type="pcre2">system upgraded from (\S+) to (\S+)</regex>
+  <order>old_version, new_version</order>
+</decoder>
+
+<!-- Backup created/restored -->
+<decoder name="backup_operation">
+  <prematch type="pcre2">backup (saved|restored) by</prematch>
+  <regex type="pcre2">backup (saved|restored) by (\S+)</regex>
+  <order>action, username</order>
+</decoder>
+
+<!-- Configuration export -->
+<decoder name="config_export">
+  <prematch type="pcre2">configuration exported by</prematch>
+  <regex type="pcre2">configuration exported by (\S+)</regex>
+  <order>username</order>
+</decoder>
