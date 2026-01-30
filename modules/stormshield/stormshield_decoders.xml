@@ -7,106 +7,65 @@
   <prematch>id=firewall</prematch>
 </decoder>
 
-<!-- Core fields: time and fw -->
-<decoder name="stormshield1">
+<!-- Alarm log type - most complete -->
+<decoder name="stormshield-alarm">
+  <parent>stormshield</parent>
+  <prematch>logtype="alarm"</prematch>
+  <regex> time="(\d+-\d+-\d+ \d+:\d+:\d+)" fw="(\S+)" \.+ pri=(\d+) \.+ src=(\d+\.\d+\.\d+\.\d+) srcport=(\d+)\.+ dst=(\d+\.\d+\.\d+\.\d+) dstport=(\d+)\.+ action=(\w+) msg="([^"]+)"\.+ alarmid=(\d+)</regex>
+  <order>time, fw, pri, srcip, srcport, dstip, dstport, stormshield_action, msg, alarmid</order>
+</decoder>
+
+<!-- Connection/filter log type -->
+<decoder name="stormshield-connection">
+  <parent>stormshield</parent>
+  <prematch>logtype="connection"</prematch>
+  <regex> time="(\d+-\d+-\d+ \d+:\d+:\d+)" fw="(\S+)" \.+ pri=(\d+) \.+ src=(\d+\.\d+\.\d+\.\d+) srcport=(\d+)\.+ dst=(\d+\.\d+\.\d+\.\d+) dstport=(\d+)\.+ action=(\w+)</regex>
+  <order>time, fw, pri, srcip, srcport, dstip, dstport, stormshield_action</order>
+</decoder>
+
+<!-- Filter log type -->
+<decoder name="stormshield-filter">
+  <parent>stormshield</parent>
+  <prematch>logtype="filter"</prematch>
+  <regex> time="(\d+-\d+-\d+ \d+:\d+:\d+)" fw="(\S+)" \.+ pri=(\d+) \.+ src=(\d+\.\d+\.\d+\.\d+) srcport=(\d+)\.+ dst=(\d+\.\d+\.\d+\.\d+) dstport=(\d+)\.+ action=(\w+)</regex>
+  <order>time, fw, pri, srcip, srcport, dstip, dstport, stormshield_action</order>
+</decoder>
+
+<!-- Auth log type -->
+<decoder name="stormshield-auth">
+  <parent>stormshield</parent>
+  <prematch>logtype="auth"</prematch>
+  <regex> time="(\d+-\d+-\d+ \d+:\d+:\d+)" fw="(\S+)" \.+ user="([^"]+)"\.+ address=(\S+) \.+ error=(\d+)</regex>
+  <order>time, fw, user, address, error</order>
+</decoder>
+
+<!-- Server/admin log type -->
+<decoder name="stormshield-server">
+  <parent>stormshield</parent>
+  <prematch>logtype="server"</prematch>
+  <regex> time="(\d+-\d+-\d+ \d+:\d+:\d+)" fw="(\S+)" \.+ user="([^"]+)"\.+ address=(\S+)</regex>
+  <order>time, fw, user, address</order>
+</decoder>
+
+<!-- VPN log type -->
+<decoder name="stormshield-vpn">
+  <parent>stormshield</parent>
+  <prematch>logtype="vpn"</prematch>
+  <regex> time="(\d+-\d+-\d+ \d+:\d+:\d+)" fw="(\S+)" \.+ src=(\d+\.\d+\.\d+\.\d+)\.+ dst=(\d+\.\d+\.\d+\.\d+)</regex>
+  <order>time, fw, srcip, dstip</order>
+</decoder>
+
+<!-- System log type -->
+<decoder name="stormshield-system">
+  <parent>stormshield</parent>
+  <prematch>logtype="system"</prematch>
+  <regex> time="(\d+-\d+-\d+ \d+:\d+:\d+)" fw="(\S+)" \.+ msg="([^"]+)"</regex>
+  <order>time, fw, msg</order>
+</decoder>
+
+<!-- Fallback for any other stormshield log -->
+<decoder name="stormshield-generic">
   <parent>stormshield</parent>
   <regex offset="after_parent"> time="(\d+-\d+-\d+ \d+:\d+:\d+)" fw="(\S+)"</regex>
   <order>time, fw</order>
-</decoder>
-
-<!-- Network: src, srcport, dst, dstport -->
-<decoder name="stormshield2">
-  <parent>stormshield</parent>
-  <regex> src=(\d+\.\d+\.\d+\.\d+) srcport=(\d+)\.+ dst=(\d+\.\d+\.\d+\.\d+) dstport=(\d+)</regex>
-  <order>srcip, srcport, dstip, dstport</order>
-</decoder>
-
-<!-- Action and message -->
-<decoder name="stormshield3">
-  <parent>stormshield</parent>
-  <regex> action=(\w+) msg="([^"]+)"</regex>
-  <order>stormshield_action, msg</order>
-</decoder>
-
-<!-- Alarm fields -->
-<decoder name="stormshield4">
-  <parent>stormshield</parent>
-  <regex> class=(\w+) classification=(\d+) alarmid=(\d+)</regex>
-  <order>class, classification, alarmid</order>
-</decoder>
-
-<!-- Logtype -->
-<decoder name="stormshield5">
-  <parent>stormshield</parent>
-  <regex> logtype="(\w+)"</regex>
-  <order>logtype</order>
-</decoder>
-
-<!-- Priority and protocol -->
-<decoder name="stormshield6">
-  <parent>stormshield</parent>
-  <regex> pri=(\d+) \.+ ipproto=(\w+)</regex>
-  <order>pri, ipproto</order>
-</decoder>
-
-<!-- Interfaces -->
-<decoder name="stormshield7">
-  <parent>stormshield</parent>
-  <regex> srcifname="([^"]+)"\.+ dstifname="([^"]+)"</regex>
-  <order>srcifname, dstifname</order>
-</decoder>
-
-<!-- Rule info -->
-<decoder name="stormshield8">
-  <parent>stormshield</parent>
-  <regex> ruleid=(\d+) rulename="([^"]+)"</regex>
-  <order>ruleid, rulename</order>
-</decoder>
-
-<!-- Auth: user and address -->
-<decoder name="stormshield9">
-  <parent>stormshield</parent>
-  <regex> user="([^"]+)"\.* address=(\S+)</regex>
-  <order>user, address</order>
-</decoder>
-
-<!-- Auth: user only -->
-<decoder name="stormshield10">
-  <parent>stormshield</parent>
-  <regex> user="([^"]+)"</regex>
-  <order>user</order>
-</decoder>
-
-<!-- Error -->
-<decoder name="stormshield11">
-  <parent>stormshield</parent>
-  <regex> error=(\d+)</regex>
-  <order>error</order>
-</decoder>
-
-<!-- VPN tunnel -->
-<decoder name="stormshield12">
-  <parent>stormshield</parent>
-  <regex> tunnel="([^"]+)"</regex>
-  <order>tunnel</order>
-</decoder>
-
-<!-- VPN phase -->
-<decoder name="stormshield13">
-  <parent>stormshield</parent>
-  <regex> phase=(\d+)</regex>
-  <order>phase</order>
-</decoder>
-
-<!-- Country -->
-<decoder name="stormshield14">
-  <parent>stormshield</parent>
-  <regex> dstcountry="(\w+)"</regex>
-  <order>dstcountry</order>
-</decoder>
-
-<decoder name="stormshield15">
-  <parent>stormshield</parent>
-  <regex> srccountry="(\w+)"</regex>
-  <order>srccountry</order>
 </decoder>
