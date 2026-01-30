@@ -12,7 +12,8 @@
 # Repository: https://github.com/grandir66/wazuh-multivendor-installer
 #
 
-set -e
+# Don't exit on error - we handle errors manually
+set +e
 
 # Disable bash history expansion for passwords with special characters
 set +H
@@ -131,7 +132,7 @@ discover_modules() {
                 # Check if installed
                 check_module_installed "$module_name"
                 
-                ((count++))
+                count=$((count + 1))
             fi
         fi
     done
@@ -237,7 +238,7 @@ display_modules() {
                 
                 printf "  %-3s %-20s %-18b %-12s %s\n" "$i" "$display_name" "$status_display" "$category" "$desc_short"
                 
-                ((i++))
+                i=$((i + 1))
             fi
         fi
     done
@@ -526,10 +527,10 @@ NETRC_EOF
             
             if echo "$RESPONSE" | grep -qE '"success":true|"successCount"'; then
                 print_ok "Imported successfully"
-                ((success++))
+                success=$((success + 1))
             else
                 print_error "Import failed"
-                ((failed++))
+                failed=$((failed + 1))
             fi
         fi
     done
@@ -641,7 +642,7 @@ select_modules_to_install() {
                     echo -e "  ${YELLOW}[$i]${NC} $display_name (already installed)"
                 fi
                 
-                ((i++))
+                i=$((i + 1))
             fi
         fi
     done
@@ -719,7 +720,7 @@ select_modules_to_uninstall() {
                     has_installed=true
                 fi
                 
-                ((i++))
+                i=$((i + 1))
             fi
         fi
     done
@@ -764,9 +765,9 @@ install_all_modules() {
             
             if [ "$status" != "installed" ]; then
                 if install_module "$module_name"; then
-                    ((installed++))
+                    installed=$((installed + 1))
                 else
-                    ((failed++))
+                    failed=$((failed + 1))
                 fi
             fi
         fi
@@ -811,7 +812,7 @@ show_status_summary() {
             
             if [ "$status" = "installed" ]; then
                 print_ok "$display_name ($category)"
-                ((installed_count++))
+                installed_count=$((installed_count + 1))
             fi
         fi
     done
