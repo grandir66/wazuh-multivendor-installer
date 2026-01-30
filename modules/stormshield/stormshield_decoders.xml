@@ -1,6 +1,6 @@
 <!-- Stormshield Firewall Decoders for Wazuh -->
 <!-- https://github.com/grandir66/wazuh-multivendor-installer -->
-<!-- Based on FryggFR/Wazuh-Stormshield, extended with additional fields -->
+<!-- Supports both RFC5424+WELF and pure WELF formats -->
 <!-- Rule IDs: 100400-100499 -->
 
 <!-- Main Stormshield decoder - matches WELF format -->
@@ -8,306 +8,151 @@
   <prematch>id=firewall</prematch>
 </decoder>
 
-<!-- Time field -->
-<decoder name="stormshield-time">
+<!-- Extract core fields -->
+<decoder name="stormshield-fields">
   <parent>stormshield</parent>
-  <regex>time="(\d+-\d+-\d+ \d+:\d+:\d+)"</regex>
-  <order>time</order>
+  <regex offset="after_parent">time="(\d+-\d+-\d+ \d+:\d+:\d+)" fw="(\S+)"</regex>
+  <order>time, fw</order>
 </decoder>
 
-<!-- Firewall ID -->
-<decoder name="stormshield-fw">
+<!-- Extract network traffic fields for filter/connection logs -->
+<decoder name="stormshield-traffic">
   <parent>stormshield</parent>
-  <regex>fw="(\S+)"</regex>
-  <order>fw</order>
+  <regex> src=(\d+.\d+.\d+.\d+) srcport=(\d+)\S* \S+ dst=(\d+.\d+.\d+.\d+) dstport=(\d+)</regex>
+  <order>srcip, srcport, dstip, dstport</order>
 </decoder>
 
-<!-- Timezone -->
-<decoder name="stormshield-tz">
-  <parent>stormshield</parent>
-  <regex>tz=(\S+)</regex>
-  <order>tz</order>
-</decoder>
-
-<!-- Start time -->
-<decoder name="stormshield-startime">
-  <parent>stormshield</parent>
-  <regex>startime="(\d+-\d+-\d+ \d+:\d+:\d+)"</regex>
-  <order>startime</order>
-</decoder>
-
-<!-- Log type (server, auth, vpn, alarm, system, connection, filter) -->
-<decoder name="stormshield-logtype">
-  <parent>stormshield</parent>
-  <regex>logtype="?(\w+)"?</regex>
-  <order>logtype</order>
-</decoder>
-
-<!-- Priority level -->
-<decoder name="stormshield-pri">
-  <parent>stormshield</parent>
-  <regex>pri=(\d+)</regex>
-  <order>pri</order>
-</decoder>
-
-<!-- Action (pass, block) -->
+<!-- Extract action -->
 <decoder name="stormshield-action">
   <parent>stormshield</parent>
-  <regex>action=(\w+)</regex>
+  <regex> action=(\w+) </regex>
   <order>stormshield_action</order>
 </decoder>
 
-<!-- Message -->
+<!-- Extract message -->
 <decoder name="stormshield-msg">
   <parent>stormshield</parent>
-  <regex>msg="([^"]+)"</regex>
+  <regex> msg="([^"]+)"</regex>
   <order>msg</order>
 </decoder>
 
-<!-- Error code -->
-<decoder name="stormshield-error">
+<!-- Extract logtype -->
+<decoder name="stormshield-logtype">
   <parent>stormshield</parent>
-  <regex>error=(\d+)</regex>
-  <order>error</order>
+  <regex> logtype="(\w+)"</regex>
+  <order>logtype</order>
 </decoder>
 
-<!-- ============================================== -->
-<!-- Authentication Fields                          -->
-<!-- ============================================== -->
-
-<!-- User -->
-<decoder name="stormshield-user">
+<!-- Extract priority -->
+<decoder name="stormshield-pri">
   <parent>stormshield</parent>
-  <regex>user="?([^"]+)"?</regex>
-  <order>user</order>
+  <regex> pri=(\d+) </regex>
+  <order>pri</order>
 </decoder>
 
-<!-- Source address for auth -->
-<decoder name="stormshield-address">
+<!-- Extract protocol -->
+<decoder name="stormshield-proto">
   <parent>stormshield</parent>
-  <regex>address=(\S+)</regex>
-  <order>address</order>
-</decoder>
-
-<!-- Session ID -->
-<decoder name="stormshield-sessionid">
-  <parent>stormshield</parent>
-  <regex>sessionid=(\S+)</regex>
-  <order>sessionid</order>
-</decoder>
-
-<!-- Authentication method -->
-<decoder name="stormshield-method">
-  <parent>stormshield</parent>
-  <regex>method="?([^"]+)"?</regex>
-  <order>method</order>
-</decoder>
-
-<!-- Domain -->
-<decoder name="stormshield-domain">
-  <parent>stormshield</parent>
-  <regex>domain="?([^"]+)"?</regex>
-  <order>domain</order>
-</decoder>
-
-<!-- ============================================== -->
-<!-- Network Fields                                 -->
-<!-- ============================================== -->
-
-<!-- Source IP -->
-<decoder name="stormshield-src">
-  <parent>stormshield</parent>
-  <regex>src=(\d+.\d+.\d+.\d+)</regex>
-  <order>srcip</order>
-</decoder>
-
-<!-- Destination IP -->
-<decoder name="stormshield-dst">
-  <parent>stormshield</parent>
-  <regex>dst=(\d+.\d+.\d+.\d+)</regex>
-  <order>dstip</order>
-</decoder>
-
-<!-- Source port -->
-<decoder name="stormshield-srcport">
-  <parent>stormshield</parent>
-  <regex>srcport=(\d+)</regex>
-  <order>srcport</order>
-</decoder>
-
-<!-- Destination port -->
-<decoder name="stormshield-dstport">
-  <parent>stormshield</parent>
-  <regex>dstport=(\d+)</regex>
-  <order>dstport</order>
-</decoder>
-
-<!-- IP protocol -->
-<decoder name="stormshield-ipproto">
-  <parent>stormshield</parent>
-  <regex>ipproto=(\w+)</regex>
+  <regex> ipproto=(\w+) </regex>
   <order>ipproto</order>
 </decoder>
 
-<!-- Protocol/Service -->
-<decoder name="stormshield-proto">
-  <parent>stormshield</parent>
-  <regex>proto=(\w+)</regex>
-  <order>proto</order>
-</decoder>
-
-<!-- Source interface -->
+<!-- Extract interfaces -->
 <decoder name="stormshield-srcif">
   <parent>stormshield</parent>
-  <regex>srcif="?([^"]+)"?</regex>
-  <order>srcif</order>
+  <regex> srcifname="([^"]+)"</regex>
+  <order>srcifname</order>
 </decoder>
 
-<!-- Destination interface -->
 <decoder name="stormshield-dstif">
   <parent>stormshield</parent>
-  <regex>dstif="?([^"]+)"?</regex>
-  <order>dstif</order>
+  <regex> dstifname="([^"]+)"</regex>
+  <order>dstifname</order>
 </decoder>
 
-<!-- Source MAC -->
-<decoder name="stormshield-srcmac">
+<!-- Extract alarm fields -->
+<decoder name="stormshield-alarm">
   <parent>stormshield</parent>
-  <regex>srcmac=(\S+)</regex>
-  <order>srcmac</order>
-</decoder>
-
-<!-- Original destination (before NAT) -->
-<decoder name="stormshield-origdst">
-  <parent>stormshield</parent>
-  <regex>origdst=(\S+)</regex>
-  <order>origdst</order>
-</decoder>
-
-<!-- Original destination port -->
-<decoder name="stormshield-origdstport">
-  <parent>stormshield</parent>
-  <regex>origdstport=(\d+)</regex>
-  <order>origdstport</order>
-</decoder>
-
-<!-- ============================================== -->
-<!-- VPN Fields                                     -->
-<!-- ============================================== -->
-
-<!-- VPN phase (1 or 2 for IPsec) -->
-<decoder name="stormshield-phase">
-  <parent>stormshield</parent>
-  <regex>phase=(\d+)</regex>
-  <order>phase</order>
-</decoder>
-
-<!-- VPN type -->
-<decoder name="stormshield-vpntype">
-  <parent>stormshield</parent>
-  <regex>vpntype="?([^"]+)"?</regex>
-  <order>vpntype</order>
-</decoder>
-
-<!-- Tunnel name -->
-<decoder name="stormshield-tunnel">
-  <parent>stormshield</parent>
-  <regex>tunnel="?([^"]+)"?</regex>
-  <order>tunnel</order>
-</decoder>
-
-<!-- ============================================== -->
-<!-- Alarm/IPS Fields                               -->
-<!-- ============================================== -->
-
-<!-- Alarm ID -->
-<decoder name="stormshield-alarmid">
-  <parent>stormshield</parent>
-  <regex>alarmid=(\d+)</regex>
+  <regex> alarmid=(\d+) </regex>
   <order>alarmid</order>
 </decoder>
 
-<!-- Alarm class -->
 <decoder name="stormshield-class">
   <parent>stormshield</parent>
-  <regex>class=(\w+)</regex>
+  <regex> class=(\w+) </regex>
   <order>class</order>
 </decoder>
 
-<!-- Classification -->
-<decoder name="stormshield-classification">
+<!-- Extract user for auth logs -->
+<decoder name="stormshield-user">
   <parent>stormshield</parent>
-  <regex>classification=(\d+)</regex>
-  <order>classification</order>
+  <regex> user="([^"]+)"</regex>
+  <order>user</order>
 </decoder>
 
-<!-- Target -->
-<decoder name="stormshield-target">
+<!-- Extract address for auth logs -->
+<decoder name="stormshield-address">
   <parent>stormshield</parent>
-  <regex>target=(\S+)</regex>
-  <order>target</order>
+  <regex> address=(\S+) </regex>
+  <order>address</order>
 </decoder>
 
-<!-- ============================================== -->
-<!-- Configuration/Admin Fields                     -->
-<!-- ============================================== -->
-
-<!-- Configuration ID -->
-<decoder name="stormshield-confid">
+<!-- Extract error code -->
+<decoder name="stormshield-error">
   <parent>stormshield</parent>
-  <regex>confid=(\d+)</regex>
-  <order>confid</order>
+  <regex> error=(\d+)</regex>
+  <order>error</order>
 </decoder>
 
-<!-- Rule ID -->
+<!-- Extract rule info -->
 <decoder name="stormshield-ruleid">
   <parent>stormshield</parent>
-  <regex>ruleid=(\d+)</regex>
+  <regex> ruleid=(\d+) </regex>
   <order>ruleid</order>
 </decoder>
 
-<!-- Rule name -->
 <decoder name="stormshield-rulename">
   <parent>stormshield</parent>
-  <regex>rulename="([^"]+)"</regex>
+  <regex> rulename="([^"]+)"</regex>
   <order>rulename</order>
 </decoder>
 
-<!-- Slot level -->
-<decoder name="stormshield-slotlevel">
+<!-- Extract VPN fields -->
+<decoder name="stormshield-tunnel">
   <parent>stormshield</parent>
-  <regex>slotlevel=(\d+)</regex>
-  <order>slotlevel</order>
+  <regex> tunnel="([^"]+)"</regex>
+  <order>tunnel</order>
 </decoder>
 
-<!-- ============================================== -->
-<!-- Traffic Statistics Fields                      -->
-<!-- ============================================== -->
+<decoder name="stormshield-phase">
+  <parent>stormshield</parent>
+  <regex> phase=(\d+) </regex>
+  <order>phase</order>
+</decoder>
 
-<!-- Bytes sent -->
+<!-- Extract traffic stats -->
 <decoder name="stormshield-sent">
   <parent>stormshield</parent>
-  <regex>sent=(\d+)</regex>
+  <regex> sent=(\d+) </regex>
   <order>sent</order>
 </decoder>
 
-<!-- Bytes received -->
 <decoder name="stormshield-rcvd">
   <parent>stormshield</parent>
-  <regex>rcvd=(\d+)</regex>
+  <regex> rcvd=(\d+) </regex>
   <order>rcvd</order>
 </decoder>
 
-<!-- Duration -->
-<decoder name="stormshield-duration">
+<!-- Extract country -->
+<decoder name="stormshield-country">
   <parent>stormshield</parent>
-  <regex>duration=(\d+)</regex>
-  <order>duration</order>
+  <regex> srccountry="(\w+)"</regex>
+  <order>srccountry</order>
 </decoder>
 
-<!-- IP version -->
-<decoder name="stormshield-ipv">
+<!-- Extract MAC -->
+<decoder name="stormshield-mac">
   <parent>stormshield</parent>
-  <regex>ipv=(\d+)</regex>
-  <order>ipv</order>
+  <regex> srcmac=(\S+) </regex>
+  <order>srcmac</order>
 </decoder>
