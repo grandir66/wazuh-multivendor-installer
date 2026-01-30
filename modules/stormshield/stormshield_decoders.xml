@@ -1,73 +1,51 @@
 <!-- Stormshield Firewall Decoders for Wazuh -->
 <!-- https://github.com/grandir66/wazuh-multivendor-installer -->
 <!-- Rule IDs: 100400-100499 -->
-<!-- Note: Wazuh only runs ONE child decoder per parent, so we must extract all fields in one regex -->
 
 <!-- Main Stormshield decoder -->
 <decoder name="stormshield">
   <prematch>id=firewall</prematch>
 </decoder>
 
-<!-- Single decoder for alarm logs - captures all key fields in one regex -->
-<!-- Pattern: time fw pri src srcport dst dstport action msg alarmid logtype -->
-<decoder name="stormshield-alarm-full">
+<!-- Alarm logs - simpler regex -->
+<decoder name="stormshield-alarm">
   <parent>stormshield</parent>
   <prematch>logtype="alarm"</prematch>
-  <regex>time="(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)" fw="(\w+)" tz=\S+ \S+ pri=(\d) \.+ src=(\d+\.\d+\.\d+\.\d+) srcport=(\d+) \.+ dst=(\d+\.\d+\.\d+\.\d+) dstport=(\d+) \.+ action=(\w+) msg="([^"]+)" \.+ alarmid=(\d+) \.+ logtype="(\w+)"</regex>
-  <order>time,fw,pri,srcip,srcport,dstip,dstport,stormshield_action,msg,alarmid,logtype</order>
+  <regex offset="after_parent">time="(\.+)" fw="(\S+)"</regex>
+  <order>time,fw</order>
 </decoder>
 
-<!-- Single decoder for connection logs -->
-<decoder name="stormshield-connection-full">
+<decoder name="stormshield-alarm2">
   <parent>stormshield</parent>
-  <prematch>logtype="connection"</prematch>
-  <regex>time="(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)" fw="(\w+)" tz=\S+ \S+ pri=(\d) \.+ src=(\d+\.\d+\.\d+\.\d+) srcport=(\d+) \.+ dst=(\d+\.\d+\.\d+\.\d+) dstport=(\d+) \.+ action=(\w+) \.+ logtype="(\w+)"</regex>
-  <order>time,fw,pri,srcip,srcport,dstip,dstport,stormshield_action,logtype</order>
+  <prematch>logtype="alarm"</prematch>
+  <regex>src=(\d+\.\d+\.\d+\.\d+) srcport=(\d+)\p*\s\S+\s\S+\sdst=(\d+\.\d+\.\d+\.\d+) dstport=(\d+)</regex>
+  <order>srcip,srcport,dstip,dstport</order>
 </decoder>
 
-<!-- Single decoder for filter logs -->
-<decoder name="stormshield-filter-full">
+<decoder name="stormshield-alarm3">
   <parent>stormshield</parent>
-  <prematch>logtype="filter"</prematch>
-  <regex>time="(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)" fw="(\w+)" tz=\S+ \S+ pri=(\d) \.+ src=(\d+\.\d+\.\d+\.\d+) srcport=(\d+) \.+ dst=(\d+\.\d+\.\d+\.\d+) dstport=(\d+) \.+ action=(\w+) \.+ logtype="(\w+)"</regex>
-  <order>time,fw,pri,srcip,srcport,dstip,dstport,stormshield_action,logtype</order>
+  <prematch>logtype="alarm"</prematch>
+  <regex>action=(\w+) msg="(\.+)" class</regex>
+  <order>stormshield_action,msg</order>
 </decoder>
 
-<!-- Single decoder for auth logs -->
-<decoder name="stormshield-auth-full">
+<decoder name="stormshield-alarm4">
   <parent>stormshield</parent>
-  <prematch>logtype="auth"</prematch>
-  <regex>time="(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)" fw="(\w+)" \.+ user="([^"]+)" \.+ address=(\S+) \.+ error=(\d+) \.+ logtype="(\w+)"</regex>
-  <order>time,fw,user,address,error,logtype</order>
+  <prematch>logtype="alarm"</prematch>
+  <regex>alarmid=(\d+)</regex>
+  <order>alarmid</order>
 </decoder>
 
-<!-- Single decoder for server logs -->
-<decoder name="stormshield-server-full">
+<decoder name="stormshield-alarm5">
   <parent>stormshield</parent>
-  <prematch>logtype="server"</prematch>
-  <regex>time="(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)" fw="(\w+)" \.+ user="([^"]+)" \.+ address=(\S+) \.+ msg="([^"]+)" \.+ logtype="(\w+)"</regex>
-  <order>time,fw,user,address,msg,logtype</order>
+  <prematch>logtype="alarm"</prematch>
+  <regex>pri=(\d+)</regex>
+  <order>pri</order>
 </decoder>
 
-<!-- Single decoder for vpn logs -->
-<decoder name="stormshield-vpn-full">
+<!-- Fallback for other logs -->
+<decoder name="stormshield-generic">
   <parent>stormshield</parent>
-  <prematch>logtype="vpn"</prematch>
-  <regex>time="(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)" fw="(\w+)" \.+ src=(\d+\.\d+\.\d+\.\d+) \.+ dst=(\d+\.\d+\.\d+\.\d+) \.+ msg="([^"]+)" \.+ logtype="(\w+)"</regex>
-  <order>time,fw,srcip,dstip,msg,logtype</order>
-</decoder>
-
-<!-- Single decoder for system logs -->
-<decoder name="stormshield-system-full">
-  <parent>stormshield</parent>
-  <prematch>logtype="system"</prematch>
-  <regex>time="(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)" fw="(\w+)" \.+ msg="([^"]+)" \.+ logtype="(\w+)"</regex>
-  <order>time,fw,msg,logtype</order>
-</decoder>
-
-<!-- Fallback - just extract time and fw for unknown logtypes -->
-<decoder name="stormshield-fallback">
-  <parent>stormshield</parent>
-  <regex>time="(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)" fw="(\w+)"</regex>
+  <regex offset="after_parent">time="(\.+)" fw="(\S+)"</regex>
   <order>time,fw</order>
 </decoder>
