@@ -1,19 +1,19 @@
 <!-- Stormshield Firewall Decoders for Wazuh -->
 <!-- https://github.com/grandir66/wazuh-multivendor-installer -->
 <!-- Rule IDs: 100400-100499 -->
-<!-- Works with rsyslog preprocessed logs -->
+<!-- Works with rsyslog preprocessed logs (program_name=stormshield) -->
 
-<!-- Main Stormshield decoder - matches both direct and rsyslog formats -->
+<!-- Main Stormshield decoder - match by program_name -->
 <decoder name="stormshield">
-  <prematch>id=firewall</prematch>
+  <program_name>^stormshield$</program_name>
 </decoder>
 
 <!-- Alarm logs -->
 <decoder name="stormshield-alarm">
   <parent>stormshield</parent>
   <prematch>logtype="alarm"</prematch>
-  <regex>time="(\.+)" fw="(\S+)" \.+ pri=(\d) \.+ src=(\d+\.\d+\.\d+\.\d+) srcport=(\d+) \.+ dst=(\d+\.\d+\.\d+\.\d+) dstport=(\d+) \.+ action=(\w+) msg="(\.+)" \.+ alarmid=(\d+)</regex>
-  <order>time,fw,pri,srcip,srcport,dstip,dstport,stormshield_action,msg,alarmid</order>
+  <regex>time="(\.+)" fw="(\S+)" \.+ pri=(\d) \.+ src=(\d+\.\d+\.\d+\.\d+) \.+ dst=(\d+\.\d+\.\d+\.\d+) \.+ action=(\w+) msg="(\.+)" \.+ alarmid=(\d+)</regex>
+  <order>time,fw,pri,srcip,dstip,stormshield_action,msg,alarmid</order>
 </decoder>
 
 <!-- Connection/filter logs -->
@@ -63,7 +63,7 @@
   <order>time,fw,msg</order>
 </decoder>
 
-<!-- Fallback -->
+<!-- Fallback for any stormshield log -->
 <decoder name="stormshield-generic">
   <parent>stormshield</parent>
   <regex>time="(\.+)" fw="(\S+)"</regex>
