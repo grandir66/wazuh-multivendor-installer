@@ -2,9 +2,52 @@
 <!-- https://github.com/grandir66/wazuh-multivendor-installer -->
 <!-- Rule IDs: 100400-100499 -->
 
-<!-- Main Stormshield decoder -->
+<!-- Main Stormshield decoder - extracts key fields -->
 <decoder name="stormshield">
-  <prematch>^time="\d+-\d+-\d+ \d+:\d+:\d+" fw="\w+"</prematch>
-  <regex>^time="(\d+-\d+-\d+ \d+:\d+:\d+)" fw="(\w+)" \.+ pri=(\d+) \.+ src=(\d+\.\d+\.\d+\.\d+) \.+ dst=(\d+\.\d+\.\d+\.\d+) \.+ action=(\w+) msg="(\.+)" \.+ logtype="(\w+)"</regex>
-  <order>time,fw,pri,srcip,dstip,stormshield_action,msg,logtype</order>
+  <prematch>^time="</prematch>
+  <regex>^time="(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)" fw="(\S+)"</regex>
+  <order>time,fw</order>
+</decoder>
+
+<!-- Child decoder to extract more fields -->
+<decoder name="stormshield-fields">
+  <parent>stormshield</parent>
+  <regex> pri=(\d+) </regex>
+  <order>pri</order>
+</decoder>
+
+<decoder name="stormshield-src">
+  <parent>stormshield</parent>
+  <regex> src=(\d+\.\d+\.\d+\.\d+) </regex>
+  <order>srcip</order>
+</decoder>
+
+<decoder name="stormshield-dst">
+  <parent>stormshield</parent>
+  <regex> dst=(\d+\.\d+\.\d+\.\d+) </regex>
+  <order>dstip</order>
+</decoder>
+
+<decoder name="stormshield-action">
+  <parent>stormshield</parent>
+  <regex> action=(\w+) </regex>
+  <order>stormshield_action</order>
+</decoder>
+
+<decoder name="stormshield-msg">
+  <parent>stormshield</parent>
+  <regex> msg="([^"]+)"</regex>
+  <order>msg</order>
+</decoder>
+
+<decoder name="stormshield-logtype">
+  <parent>stormshield</parent>
+  <regex> logtype="(\w+)"</regex>
+  <order>logtype</order>
+</decoder>
+
+<decoder name="stormshield-alarmid">
+  <parent>stormshield</parent>
+  <regex> alarmid=(\d+) </regex>
+  <order>alarmid</order>
 </decoder>
