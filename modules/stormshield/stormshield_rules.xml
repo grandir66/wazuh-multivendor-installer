@@ -10,7 +10,8 @@
   <!-- ============================================== -->
 
   <rule id="100400" level="3">
-    <decoded_as>stormshield-json</decoded_as>
+    <decoded_as>json</decoded_as>
+    <field name="integration">stormshield</field>
     <description>Stormshield: Event from $(stormshield.fw)</description>
     <group>stormshield</group>
   </rule>
