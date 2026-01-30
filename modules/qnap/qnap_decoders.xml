@@ -10,7 +10,7 @@
 <decoder name="qnap-conn-domain">
   <parent>qnap-qulogd</parent>
   <prematch>conn log</prematch>
-  <regex>Users: (\w+)\\(\w+), Source IP: (\d+\.\d+\.\d+\.\d+), Computer name: (\S+), Connection type: (\S+), Accessed resources: (\S+), Action: (\w+)</regex>
+  <regex>Users: (\w+)\\(\w+), Source IP: (\d+.\d+.\d+.\d+), Computer name: (\S+), Connection type: (\S+), Accessed resources: (\S+), Action: (\w+)</regex>
   <order>domain, user, srcip, computer, protocol, resource, action</order>
 </decoder>
 
@@ -18,7 +18,7 @@
 <decoder name="qnap-conn-nodom">
   <parent>qnap-qulogd</parent>
   <prematch>conn log</prematch>
-  <regex>Users: (\S+), Source IP: (\d+\.\d+\.\d+\.\d+), Computer name: (\S+), Connection type: (\S+), Accessed resources: (\S+), Action: (\w+)</regex>
+  <regex>Users: (\S+), Source IP: (\d+.\d+.\d+.\d+), Computer name: (\S+), Connection type: (\S+), Accessed resources: (\S+), Action: (\w+)</regex>
   <order>user, srcip, computer, protocol, resource, action</order>
 </decoder>
 
@@ -46,12 +46,28 @@
   <prematch>System</prematch>
 </decoder>
 
-<!-- Login events -->
-<decoder name="qnap-login">
+<!-- Login OK events -->
+<decoder name="qnap-login-ok">
   <parent>qnap-qulogd</parent>
-  <prematch>Login|Logout</prematch>
-  <regex>(\w+) (OK|Fail) from (\S+)</regex>
-  <order>action, status, srcip</order>
+  <prematch>Login OK</prematch>
+  <regex offset="after_prematch"> from (\S+)</regex>
+  <order>srcip</order>
+</decoder>
+
+<!-- Login Fail events -->
+<decoder name="qnap-login-fail">
+  <parent>qnap-qulogd</parent>
+  <prematch>Login Fail</prematch>
+  <regex offset="after_prematch"> from (\S+)</regex>
+  <order>srcip</order>
+</decoder>
+
+<!-- Logout events -->
+<decoder name="qnap-logout">
+  <parent>qnap-qulogd</parent>
+  <prematch>Logout</prematch>
+  <regex offset="after_prematch"> from (\S+)</regex>
+  <order>srcip</order>
 </decoder>
 
 <!-- Legacy qlogd -->

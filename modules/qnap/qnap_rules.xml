@@ -90,37 +90,30 @@
   <!-- ============================================== -->
 
   <rule id="100330" level="5">
-    <decoded_as>qnap-ssh</decoded_as>
-    <match>Login OK</match>
-    <description>QNAP: SSH login successful from $(srcip)</description>
+    <decoded_as>qnap-login-ok</decoded_as>
+    <description>QNAP: Login successful from $(srcip)</description>
     <group>qnap,authentication_success</group>
   </rule>
 
   <rule id="100331" level="8">
+    <decoded_as>qnap-login-fail</decoded_as>
+    <description>QNAP: Login failed from $(srcip)</description>
+    <group>qnap,authentication_failed</group>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+  </rule>
+
+  <rule id="100332" level="3">
+    <decoded_as>qnap-logout</decoded_as>
+    <description>QNAP: User logout from $(srcip)</description>
+    <group>qnap,authentication</group>
+  </rule>
+
+  <rule id="100333" level="5">
     <decoded_as>qnap-ssh</decoded_as>
-    <match>Login Fail</match>
-    <description>QNAP: SSH login failed from $(srcip)</description>
-    <group>qnap,authentication_failed</group>
-    <mitre>
-      <id>T1110</id>
-    </mitre>
-  </rule>
-
-  <rule id="100332" level="5">
-    <decoded_as>qnap-http</decoded_as>
-    <match>Login OK</match>
-    <description>QNAP: Web login successful from $(srcip)</description>
-    <group>qnap,authentication_success</group>
-  </rule>
-
-  <rule id="100333" level="7">
-    <decoded_as>qnap-http</decoded_as>
-    <match>Login Fail</match>
-    <description>QNAP: Web login failed from $(srcip)</description>
-    <group>qnap,authentication_failed</group>
-    <mitre>
-      <id>T1110</id>
-    </mitre>
+    <description>QNAP: SSH activity detected</description>
+    <group>qnap,ssh</group>
   </rule>
 
   <!-- ============================================== -->
@@ -155,17 +148,7 @@
   <rule id="100350" level="12" frequency="5" timeframe="300">
     <if_matched_sid>100331</if_matched_sid>
     <same_field>srcip</same_field>
-    <description>QNAP: Brute force attack detected - Multiple SSH failures from $(srcip)</description>
-    <group>qnap,attack,brute_force</group>
-    <mitre>
-      <id>T1110</id>
-    </mitre>
-  </rule>
-
-  <rule id="100351" level="12" frequency="5" timeframe="300">
-    <if_matched_sid>100333</if_matched_sid>
-    <same_field>srcip</same_field>
-    <description>QNAP: Brute force attack detected - Multiple Web login failures from $(srcip)</description>
+    <description>QNAP: Brute force attack detected - Multiple login failures from $(srcip)</description>
     <group>qnap,attack,brute_force</group>
     <mitre>
       <id>T1110</id>
