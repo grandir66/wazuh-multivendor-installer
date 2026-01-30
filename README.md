@@ -1,6 +1,6 @@
 # Wazuh Multi-Vendor Integration Installer
 
-A modular installation system for integrating multiple device types with Wazuh SIEM. Supports NAS devices (Synology, QNAP), network equipment (Mikrotik), and is designed to be easily extensible for additional vendors.
+A modular installation system for integrating multiple device types with Wazuh SIEM. Supports NAS devices (Synology, QNAP), network equipment (Mikrotik), firewalls (Stormshield), and is designed to be easily extensible for additional vendors.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Wazuh](https://img.shields.io/badge/wazuh-4.x-blue.svg)
@@ -21,8 +21,9 @@ A modular installation system for integrating multiple device types with Wazuh S
 | Module | Category | Description | Rule IDs |
 |--------|----------|-------------|----------|
 | **Synology NAS** | NAS | JSON-based log integration with Python decoder | 100100-100199 |
-| **QNAP NAS** | NAS | QTS syslog integration with file/SSH monitoring | 100300-100399 |
 | **Mikrotik RouterOS** | Network | DHCP, VPN, Firewall, and system change monitoring | 100200-100299 |
+| **QNAP NAS** | NAS | QTS syslog integration with file/SSH monitoring | 100300-100399 |
+| **Stormshield Firewall** | Firewall | Admin access, VPN, IPS alerts, config changes | 100400-100499 |
 
 ## Quick Start
 
@@ -167,6 +168,24 @@ Comprehensive monitoring for Mikrotik routers via syslog.
 /system logging add action=wazuh topics=account
 ```
 
+### Stormshield Firewall
+
+Complete monitoring for Stormshield SNS firewalls via syslog (WELF format).
+
+**Features:**
+- Admin authentication and session tracking
+- VPN monitoring (IPsec, SSL VPN)
+- IPS/IDS alarms with priority levels
+- Configuration change detection
+- Firewall rule modifications
+- Brute force detection
+- MITRE ATT&CK mapping
+
+**Configuration on Stormshield:**
+1. Go to **Configuration > Notifications > Logs - Syslog - IPFIX**
+2. Add Syslog server: `<WAZUH_IP>:514`
+3. Enable log types: l_server, l_auth, l_vpn, l_alarm, l_system
+
 ## Dashboards
 
 The installer includes pre-built dashboards:
@@ -175,6 +194,7 @@ The installer includes pre-built dashboards:
 |-----------|-------------|
 | **Synology Dashboard** | File operations, user activity, SMB protocol usage |
 | **Mikrotik Dashboard** | Security metrics, DHCP, VPN, firewall changes |
+| **Stormshield Dashboard** | IPS alerts, VPN, admin activity, blocked traffic |
 | **Log Explorer v2** | Dynamic filtering by agent, decoder, rule level |
 | **Source Manager** | Multi-vendor filtering (NAS, Firewall, Hypervisor) |
 
@@ -272,7 +292,7 @@ To avoid conflicts, rule IDs are allocated in ranges:
 | 100100-100199 | Synology NAS |
 | 100200-100299 | Mikrotik RouterOS |
 | 100300-100399 | QNAP NAS |
-| 100400-100499 | Reserved (future) |
+| 100400-100499 | Stormshield Firewall |
 | 100500-100599 | Reserved (future) |
 | 100600-100699 | Reserved (future) |
 
@@ -283,10 +303,12 @@ When adding new modules, use the next available range.
 ```
 wazuh-multivendor-installer/
 ├── install.sh                    # Main installer script
+├── deploy-dashboards.sh          # Standalone dashboard importer
 ├── README.md                     # This file
 ├── modules/
 │   ├── synology/
 │   │   ├── manifest.conf         # Module metadata
+│   │   ├── README.md             # Module documentation
 │   │   ├── install.sh            # Custom installer
 │   │   ├── uninstall.sh          # Custom uninstaller
 │   │   ├── check-installed.sh    # Installation check
@@ -296,15 +318,24 @@ wazuh-multivendor-installer/
 │   │       └── synology-json-decoder.py
 │   ├── qnap/
 │   │   ├── manifest.conf
+│   │   ├── README.md
 │   │   ├── qnap_decoders.xml
 │   │   └── qnap_rules.xml
-│   └── mikrotik/
+│   ├── mikrotik/
+│   │   ├── manifest.conf
+│   │   ├── README.md
+│   │   ├── mikrotik_decoders.xml
+│   │   ├── mikrotik_rules.xml
+│   │   └── script.rsc            # WireGuard monitoring
+│   └── stormshield/
 │       ├── manifest.conf
-│       ├── mikrotik_decoders.xml
-│       └── mikrotik_rules.xml
+│       ├── README.md
+│       ├── stormshield_decoders.xml
+│       └── stormshield_rules.xml
 └── dashboards/
     ├── synology-dashboard.ndjson
     ├── mikrotik-dashboard.ndjson
+    ├── stormshield-dashboard.ndjson
     ├── log-explorer-v2-dashboard.ndjson
     └── source-manager-dashboard.ndjson
 ```

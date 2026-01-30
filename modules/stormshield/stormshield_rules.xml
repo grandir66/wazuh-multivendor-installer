@@ -1,0 +1,433 @@
+<!-- Stormshield Firewall Rules for Wazuh -->
+<!-- https://github.com/grandir66/wazuh-multivendor-installer -->
+<!-- Rule IDs: 100400-100499 -->
+
+<group name="stormshield,firewall">
+
+  <!-- ============================================== -->
+  <!-- Base Rules (100400-100409)                    -->
+  <!-- ============================================== -->
+
+  <rule id="100400" level="3">
+    <decoded_as>stormshield</decoded_as>
+    <description>Stormshield: Event from $(fw)</description>
+    <group>stormshield</group>
+  </rule>
+
+  <rule id="100401" level="3">
+    <if_sid>100400</if_sid>
+    <field name="stormshield_action">pass</field>
+    <description>Stormshield: Traffic PASSED on $(fw)</description>
+    <group>stormshield,firewall_pass</group>
+  </rule>
+
+  <rule id="100402" level="5">
+    <if_sid>100400</if_sid>
+    <field name="stormshield_action">block</field>
+    <description>Stormshield: Traffic BLOCKED on $(fw) - $(srcip) to $(dstip)</description>
+    <group>stormshield,firewall_block</group>
+  </rule>
+
+  <!-- ============================================== -->
+  <!-- Authentication Rules (100410-100419)          -->
+  <!-- ============================================== -->
+
+  <rule id="100410" level="3">
+    <if_sid>100400</if_sid>
+    <field name="logtype">auth</field>
+    <field name="error">0</field>
+    <description>Stormshield: Authentication SUCCESS for $(user) from $(address)</description>
+    <group>stormshield,authentication_success</group>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+  </rule>
+
+  <rule id="100411" level="8">
+    <if_sid>100400</if_sid>
+    <field name="logtype">auth</field>
+    <field name="error">\.+</field>
+    <description>Stormshield: Authentication FAILED for $(user) from $(address)</description>
+    <group>stormshield,authentication_failed</group>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+  </rule>
+
+  <rule id="100412" level="5">
+    <if_sid>100400</if_sid>
+    <field name="logtype">server</field>
+    <match>session opened</match>
+    <description>Stormshield: Admin session OPENED by $(user) from $(address)</description>
+    <group>stormshield,admin_session</group>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+  </rule>
+
+  <rule id="100413" level="3">
+    <if_sid>100400</if_sid>
+    <field name="logtype">server</field>
+    <match>session closed</match>
+    <description>Stormshield: Admin session CLOSED by $(user)</description>
+    <group>stormshield,admin_session</group>
+  </rule>
+
+  <rule id="100414" level="12" frequency="5" timeframe="300">
+    <if_matched_sid>100411</if_matched_sid>
+    <same_field>address</same_field>
+    <description>Stormshield: BRUTE FORCE attack - Multiple auth failures from $(address)</description>
+    <group>stormshield,authentication_failed,attack</group>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+  </rule>
+
+  <rule id="100415" level="10">
+    <if_sid>100412</if_sid>
+    <time>22:00 - 06:00</time>
+    <description>Stormshield: Admin login AFTER-HOURS by $(user) from $(address)</description>
+    <group>stormshield,admin_session,anomaly</group>
+  </rule>
+
+  <!-- ============================================== -->
+  <!-- VPN Rules (100420-100429)                     -->
+  <!-- ============================================== -->
+
+  <rule id="100420" level="5">
+    <if_sid>100400</if_sid>
+    <field name="logtype">vpn</field>
+    <match>tunnel up</match>
+    <description>Stormshield: IPsec tunnel ESTABLISHED - $(tunnel)</description>
+    <group>stormshield,vpn,ipsec</group>
+  </rule>
+
+  <rule id="100421" level="5">
+    <if_sid>100400</if_sid>
+    <field name="logtype">vpn</field>
+    <match>tunnel down</match>
+    <description>Stormshield: IPsec tunnel TERMINATED - $(tunnel)</description>
+    <group>stormshield,vpn,ipsec</group>
+  </rule>
+
+  <rule id="100422" level="5">
+    <if_sid>100400</if_sid>
+    <field name="logtype">vpn</field>
+    <match>SSL VPN</match>
+    <match>connected</match>
+    <description>Stormshield: SSL VPN CONNECTED - $(user) from $(srcip)</description>
+    <group>stormshield,vpn,sslvpn</group>
+  </rule>
+
+  <rule id="100423" level="3">
+    <if_sid>100400</if_sid>
+    <field name="logtype">vpn</field>
+    <match>SSL VPN</match>
+    <match>disconnected</match>
+    <description>Stormshield: SSL VPN DISCONNECTED - $(user)</description>
+    <group>stormshield,vpn,sslvpn</group>
+  </rule>
+
+  <rule id="100424" level="8">
+    <if_sid>100400</if_sid>
+    <field name="logtype">vpn</field>
+    <match>authentication failed</match>
+    <description>Stormshield: VPN authentication FAILED from $(srcip)</description>
+    <group>stormshield,vpn,authentication_failed</group>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+  </rule>
+
+  <rule id="100425" level="10" frequency="5" timeframe="300">
+    <if_matched_sid>100424</if_matched_sid>
+    <same_field>srcip</same_field>
+    <description>Stormshield: VPN BRUTE FORCE - Multiple failures from $(srcip)</description>
+    <group>stormshield,vpn,attack</group>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+  </rule>
+
+  <rule id="100426" level="5">
+    <if_sid>100400</if_sid>
+    <field name="logtype">vpn</field>
+    <field name="phase">1</field>
+    <description>Stormshield: IKE Phase 1 negotiation - $(srcip) to $(dstip)</description>
+    <group>stormshield,vpn,ipsec</group>
+  </rule>
+
+  <rule id="100427" level="5">
+    <if_sid>100400</if_sid>
+    <field name="logtype">vpn</field>
+    <field name="phase">2</field>
+    <description>Stormshield: IKE Phase 2 negotiation - $(srcip) to $(dstip)</description>
+    <group>stormshield,vpn,ipsec</group>
+  </rule>
+
+  <!-- ============================================== -->
+  <!-- Configuration Change Rules (100430-100439)    -->
+  <!-- ============================================== -->
+
+  <rule id="100430" level="8">
+    <if_sid>100400</if_sid>
+    <field name="logtype">server</field>
+    <match>configuration</match>
+    <description>Stormshield: Configuration MODIFIED by $(user)</description>
+    <group>stormshield,config_change</group>
+    <mitre>
+      <id>T1562</id>
+    </mitre>
+  </rule>
+
+  <rule id="100431" level="8">
+    <if_sid>100400</if_sid>
+    <field name="logtype">server</field>
+    <match>rule added</match>
+    <description>Stormshield: Firewall rule ADDED by $(user) - $(rulename)</description>
+    <group>stormshield,config_change,firewall_rule</group>
+    <mitre>
+      <id>T1562.004</id>
+    </mitre>
+  </rule>
+
+  <rule id="100432" level="10">
+    <if_sid>100400</if_sid>
+    <field name="logtype">server</field>
+    <match>rule removed</match>
+    <description>Stormshield: Firewall rule REMOVED by $(user) - $(rulename)</description>
+    <group>stormshield,config_change,firewall_rule</group>
+    <mitre>
+      <id>T1562.004</id>
+    </mitre>
+  </rule>
+
+  <rule id="100433" level="8">
+    <if_sid>100400</if_sid>
+    <field name="logtype">server</field>
+    <match>rule modified</match>
+    <description>Stormshield: Firewall rule MODIFIED by $(user) - $(rulename)</description>
+    <group>stormshield,config_change,firewall_rule</group>
+    <mitre>
+      <id>T1562.004</id>
+    </mitre>
+  </rule>
+
+  <rule id="100434" level="8">
+    <if_sid>100400</if_sid>
+    <field name="logtype">server</field>
+    <match>NAT</match>
+    <description>Stormshield: NAT configuration CHANGED by $(user)</description>
+    <group>stormshield,config_change,nat</group>
+    <mitre>
+      <id>T1562.004</id>
+    </mitre>
+  </rule>
+
+  <rule id="100435" level="6">
+    <if_sid>100400</if_sid>
+    <field name="logtype">server</field>
+    <match>object</match>
+    <description>Stormshield: Network object MODIFIED by $(user)</description>
+    <group>stormshield,config_change</group>
+  </rule>
+
+  <rule id="100436" level="6">
+    <if_sid>100400</if_sid>
+    <field name="logtype">server</field>
+    <match>backup</match>
+    <description>Stormshield: Backup CREATED by $(user)</description>
+    <group>stormshield,config_change,backup</group>
+    <mitre>
+      <id>T1005</id>
+    </mitre>
+  </rule>
+
+  <rule id="100437" level="10">
+    <if_sid>100400</if_sid>
+    <field name="logtype">system</field>
+    <match>firmware</match>
+    <description>Stormshield: FIRMWARE UPDATE on $(fw)</description>
+    <group>stormshield,system,firmware</group>
+  </rule>
+
+  <rule id="100438" level="8">
+    <if_sid>100400</if_sid>
+    <field name="logtype">server</field>
+    <match>policy activated</match>
+    <description>Stormshield: Security policy ACTIVATED by $(user)</description>
+    <group>stormshield,config_change</group>
+  </rule>
+
+  <!-- ============================================== -->
+  <!-- Alarm/IPS Rules (100440-100449)               -->
+  <!-- ============================================== -->
+
+  <rule id="100440" level="7">
+    <if_sid>100400</if_sid>
+    <field name="logtype">alarm</field>
+    <description>Stormshield: IPS ALARM - $(msg) from $(srcip) to $(dstip)</description>
+    <group>stormshield,ids,alarm</group>
+  </rule>
+
+  <rule id="100441" level="12">
+    <if_sid>100440</if_sid>
+    <field name="pri">0</field>
+    <description>Stormshield: CRITICAL ALARM (Emergency) - $(msg)</description>
+    <group>stormshield,ids,alarm,critical</group>
+  </rule>
+
+  <rule id="100442" level="11">
+    <if_sid>100440</if_sid>
+    <field name="pri">1</field>
+    <description>Stormshield: HIGH PRIORITY ALARM (Alert) - $(msg)</description>
+    <group>stormshield,ids,alarm,high</group>
+  </rule>
+
+  <rule id="100443" level="10">
+    <if_sid>100440</if_sid>
+    <field name="pri">2</field>
+    <description>Stormshield: CRITICAL ALARM - $(msg)</description>
+    <group>stormshield,ids,alarm,critical</group>
+  </rule>
+
+  <rule id="100444" level="8">
+    <if_sid>100440</if_sid>
+    <match>scan</match>
+    <description>Stormshield: PORT SCAN detected from $(srcip)</description>
+    <group>stormshield,ids,scan</group>
+    <mitre>
+      <id>T1046</id>
+    </mitre>
+  </rule>
+
+  <rule id="100445" level="10">
+    <if_sid>100440</if_sid>
+    <match>attack</match>
+    <description>Stormshield: ATTACK detected - $(msg) from $(srcip)</description>
+    <group>stormshield,ids,attack</group>
+  </rule>
+
+  <rule id="100446" level="10">
+    <if_sid>100440</if_sid>
+    <match>malware</match>
+    <description>Stormshield: MALWARE detected - $(msg)</description>
+    <group>stormshield,ids,malware</group>
+    <mitre>
+      <id>T1204</id>
+    </mitre>
+  </rule>
+
+  <rule id="100447" level="8">
+    <if_sid>100440</if_sid>
+    <match>flood</match>
+    <description>Stormshield: FLOOD attack detected from $(srcip)</description>
+    <group>stormshield,ids,dos</group>
+    <mitre>
+      <id>T1498</id>
+    </mitre>
+  </rule>
+
+  <rule id="100448" level="8">
+    <if_sid>100440</if_sid>
+    <match>intrusion</match>
+    <description>Stormshield: INTRUSION attempt - $(msg) from $(srcip)</description>
+    <group>stormshield,ids,intrusion</group>
+  </rule>
+
+  <!-- ============================================== -->
+  <!-- System Events (100450-100459)                 -->
+  <!-- ============================================== -->
+
+  <rule id="100450" level="10">
+    <if_sid>100400</if_sid>
+    <field name="logtype">system</field>
+    <match>startup</match>
+    <description>Stormshield: System STARTUP on $(fw)</description>
+    <group>stormshield,system</group>
+  </rule>
+
+  <rule id="100451" level="10">
+    <if_sid>100400</if_sid>
+    <field name="logtype">system</field>
+    <match>shutdown</match>
+    <description>Stormshield: System SHUTDOWN on $(fw)</description>
+    <group>stormshield,system</group>
+  </rule>
+
+  <rule id="100452" level="10">
+    <if_sid>100400</if_sid>
+    <field name="logtype">system</field>
+    <match>failover</match>
+    <description>Stormshield: HA FAILOVER on $(fw)</description>
+    <group>stormshield,system,ha</group>
+  </rule>
+
+  <rule id="100453" level="8">
+    <if_sid>100400</if_sid>
+    <field name="logtype">system</field>
+    <match>license</match>
+    <description>Stormshield: LICENSE warning on $(fw) - $(msg)</description>
+    <group>stormshield,system,license</group>
+  </rule>
+
+  <rule id="100454" level="8">
+    <if_sid>100400</if_sid>
+    <field name="logtype">system</field>
+    <match>disk</match>
+    <description>Stormshield: DISK/Storage warning on $(fw) - $(msg)</description>
+    <group>stormshield,system,storage</group>
+  </rule>
+
+  <rule id="100455" level="6">
+    <if_sid>100400</if_sid>
+    <field name="logtype">system</field>
+    <match>interface</match>
+    <description>Stormshield: Interface state change on $(fw) - $(msg)</description>
+    <group>stormshield,system,network</group>
+  </rule>
+
+  <rule id="100456" level="8">
+    <if_sid>100400</if_sid>
+    <field name="logtype">system</field>
+    <match>certificate</match>
+    <description>Stormshield: Certificate event on $(fw) - $(msg)</description>
+    <group>stormshield,system,certificate</group>
+  </rule>
+
+  <!-- ============================================== -->
+  <!-- Correlation Rules (100460-100469)             -->
+  <!-- ============================================== -->
+
+  <rule id="100460" level="10" frequency="20" timeframe="60">
+    <if_matched_sid>100402</if_matched_sid>
+    <same_field>srcip</same_field>
+    <description>Stormshield: Multiple BLOCKS from $(srcip) - Possible attack</description>
+    <group>stormshield,attack,correlation</group>
+  </rule>
+
+  <rule id="100461" level="12" frequency="10" timeframe="300">
+    <if_matched_group>config_change</if_matched_group>
+    <same_field>user</same_field>
+    <description>Stormshield: RAPID config changes by $(user) - Possible compromise</description>
+    <group>stormshield,config_change,attack</group>
+    <mitre>
+      <id>T1562</id>
+    </mitre>
+  </rule>
+
+  <rule id="100462" level="10" frequency="5" timeframe="60">
+    <if_matched_sid>100440</if_matched_sid>
+    <same_field>srcip</same_field>
+    <description>Stormshield: Multiple IPS alarms from $(srcip) - Active attack</description>
+    <group>stormshield,ids,attack,correlation</group>
+  </rule>
+
+  <rule id="100463" level="8">
+    <if_sid>100412</if_sid>
+    <weekday>saturday,sunday</weekday>
+    <description>Stormshield: Admin login on WEEKEND by $(user) from $(address)</description>
+    <group>stormshield,admin_session,anomaly</group>
+  </rule>
+
+</group>
