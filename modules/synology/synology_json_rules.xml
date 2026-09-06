@@ -86,16 +86,14 @@
     <group>weekend_access,anomaly,</group>
   </rule>
 
-  <!-- Ransomware detection - Multiple deletes -->
-  <rule id="100180" level="10" frequency="10" timeframe="60">
+  <!-- Mass-deletion: DOWNGRADED ad anomaly (era ransomware level 10 -> troppi FP su
+       bulk op legittime, es. cleanup MES). Il rilevamento ransomware vero e' su
+       100185 (estensioni cifratura) e 100186 (cancellazione estrema). -->
+  <rule id="100180" level="6" frequency="30" timeframe="60">
     <if_matched_sid>100151</if_matched_sid>
     <same_field>synology.srcip</same_field>
-    <description>Synology: RANSOMWARE ALERT - Multiple file deletions from $(synology.srcip) ($(synology.user))</description>
-    <group>ransomware_detection,critical,attack,</group>
-    <mitre>
-      <id>T1485</id>
-      <id>T1486</id>
-    </mitre>
+    <description>Synology: mass file deletion (possible bulk op) from $(synology.srcip) ($(synology.user))</description>
+    <group>fileserver,mass_deletion,anomaly,</group>
   </rule>
 
   <!-- Data exfiltration - Multiple reads -->
@@ -124,6 +122,30 @@
     <field name="synology.share">^admin$|^backup$|^system$|^homes$</field>
     <description>Synology: ADMINISTRATIVE share access - $(synology.user)@$(synology.srcip) → $(synology.share)</description>
     <group>admin_access,privileged_access,</group>
+  </rule>
+
+  <!-- Ransomware detection ad ALTA FEDELTA': file scritti/rinominati con estensioni
+       note di cifratura (near-zero FP). -->
+  <rule id="100185" level="12">
+    <if_sid>100140,100130</if_sid>
+    <field name="synology.action">write|create|rename|upload</field>
+    <field name="synology.path">\.encrypted$|\.locked$|\.crypto$|\.crypt$|\.enc$|\.wcry$|\.wncry$|\.lockbit$|\.conti$|\.readme$|readme.*decrypt|how.*decrypt|_restore_files|decrypt_instruction</field>
+    <description>Synology: RANSOMWARE - encrypted/renamed file by $(synology.user)@$(synology.srcip): $(synology.path)</description>
+    <group>ransomware_detection,critical,attack,</group>
+    <mitre>
+      <id>T1486</id>
+    </mitre>
+  </rule>
+
+  <!-- Ransomware/wiper: cancellazione ESTREMA (>500 file/60s), oltre il bulk legittimo. -->
+  <rule id="100186" level="12" frequency="500" timeframe="60">
+    <if_matched_sid>100151</if_matched_sid>
+    <same_field>synology.srcip</same_field>
+    <description>Synology: MASS DELETION extreme (>500 files/60s) from $(synology.srcip) ($(synology.user)) - possible ransomware/wiper</description>
+    <group>ransomware_detection,critical,attack,</group>
+    <mitre>
+      <id>T1485</id>
+    </mitre>
   </rule>
 
 </group>
